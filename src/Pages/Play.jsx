@@ -195,40 +195,42 @@ const Play = () => {
       )}
 
       {musicList.length > 0 && (
-        <Artists
-          searchQuery={searchQuery}
-          onArtistClick={artistName => {
-            // Toggle: if same artist clicked, deselect; otherwise select new artist
-            setSelectedArtist(prev =>
-              prev === artistName ? null : artistName
-            );
-          }}
-          selectedArtist={selectedArtist}
-        />
+        <div className='artists-section'>
+          <Artists
+            searchQuery={searchQuery}
+            onArtistClick={artistName => {
+              // Toggle: if same artist clicked, deselect; otherwise select new artist
+              setSelectedArtist(prev =>
+                prev === artistName ? null : artistName
+              );
+            }}
+            selectedArtist={selectedArtist}
+          />
+        </div>
       )}
 
-      {musicList.length === 0 ? (
-        <div className='empty-state'>
-          <div className='empty-icon'>🎵</div>
-          <h2>No Music Found</h2>
-          <p>Upload some tracks in the Admin panel to get started!</p>
-        </div>
-      ) : filteredMusicList.length === 0 && showFavoritesOnly ? (
-        <div className='empty-state'>
-          <div className='empty-icon'>❤️</div>
-          <h2>No Favorites Yet</h2>
-          <p>
-            Start adding songs to your favorites by clicking the heart icon!
-          </p>
-        </div>
-      ) : filteredMusicList.length === 0 ? (
-        <div className='empty-state'>
-          <div className='empty-icon'>🔍</div>
-          <h2>No Results Found</h2>
-          <p>Try adjusting your search query.</p>
-        </div>
-      ) : (
-        <div style={{ marginBottom: '150px' }}>
+      <div className='scrollable-content'>
+        {musicList.length === 0 ? (
+          <div className='empty-state'>
+            <div className='empty-icon'>🎵</div>
+            <h2>No Music Found</h2>
+            <p>Upload some tracks in the Admin panel to get started!</p>
+          </div>
+        ) : filteredMusicList.length === 0 && showFavoritesOnly ? (
+          <div className='empty-state'>
+            <div className='empty-icon'>❤️</div>
+            <h2>No Favorites Yet</h2>
+            <p>
+              Start adding songs to your favorites by clicking the heart icon!
+            </p>
+          </div>
+        ) : filteredMusicList.length === 0 ? (
+          <div className='empty-state'>
+            <div className='empty-icon'>🔍</div>
+            <h2>No Results Found</h2>
+            <p>Try adjusting your search query.</p>
+          </div>
+        ) : (
           <div className='music-grid'>
             {filteredMusicList.map(track => (
               <div
@@ -301,8 +303,8 @@ const Play = () => {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {currentTrack && (
         <div className='audio-player'>
