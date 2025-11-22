@@ -4,8 +4,9 @@
   margin: 0 auto;
   padding: 40px 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   min-height: calc(100vh - 70px);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .play-header {
