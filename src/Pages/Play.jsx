@@ -200,7 +200,9 @@ const Play = () => {
             📥 Download
           </button>
         ) : (
-          <div className='no-track-selected'>Select a track to download</div>
+          <div className='no-track-selected'>
+            Select a track to play/download
+          </div>
         )}
       </div>
     </div>
