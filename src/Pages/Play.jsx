@@ -17,7 +17,6 @@ const Play = () => {
   const [favorites, setFavorites] = useState(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const audioRef = useRef(null);
-  const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
     fetchMusicList();
@@ -156,30 +155,20 @@ const Play = () => {
 
       {/* Hamburger Menu */}
       <div className='hamburger-menu-container'>
-        <div
-          className='hamburger-icon'
-          onClick={() => setShowMenu(prev => !prev)} // <-- toggle
-        >
+        <div className='hamburger-icon'>
           <FaBars />
         </div>
-
-        {showMenu && ( // <-- conditionally rendered menu
-          <div className='hamburger-dropdown'>
-            <button
-              disabled={true}
-              className='menu-item'
-              onClick={() => navigate('/admin')}
-            >
-              Admin
-            </button>
-            <button
-              className='menu-item'
-              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            >
-              {showFavoritesOnly ? 'Show All' : 'Favorites'}
-            </button>
-          </div>
-        )}
+        <div className='hamburger-dropdown'>
+          <button className='menu-item' onClick={() => navigate('/admin')}>
+            Admin
+          </button>
+          <button
+            className='menu-item'
+            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+          >
+            {showFavoritesOnly ? 'Show All' : 'Favorites'}
+          </button>
+        </div>
       </div>
 
       {musicList.length > 0 && (

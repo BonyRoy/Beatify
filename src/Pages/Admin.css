@@ -104,6 +104,18 @@
   font-size: 0.95rem;
 }
 
+.form-group label.clickable-label {
+  cursor: pointer;
+  color: #667eea;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.form-group label.clickable-label:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
 .form-group input,
 .form-group select {
   padding: 12px 15px;
@@ -114,6 +126,121 @@
   background: white;
   width: 100%;
   box-sizing: border-box;
+}
+
+.form-group select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+/* Custom Dropdown Styles */
+.custom-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.custom-dropdown-toggle {
+  padding: 12px 15px;
+  border: 2px solid #e1e1e1;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  min-height: 48px;
+}
+
+.custom-dropdown-toggle:hover {
+  border-color: #667eea;
+}
+
+.custom-dropdown-toggle:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.dropdown-arrow {
+  color: #666;
+  font-size: 0.8rem;
+  transition: transform 0.3s ease;
+}
+
+.custom-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #e1e1e1;
+  border-radius: 8px;
+  margin-top: 5px;
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 1000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+}
+
+.custom-dropdown-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 1rem;
+}
+
+.custom-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.custom-dropdown-item:hover {
+  background: #f0f4ff;
+  color: #667eea;
+}
+
+.custom-dropdown-item.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+}
+
+.custom-dropdown-item.other-option {
+  background: #f9f9f9;
+  font-weight: 600;
+  color: #667eea;
+}
+
+.custom-dropdown-item.other-option:hover {
+  background: #f0f4ff;
+}
+
+/* Scrollbar styling for custom dropdown */
+.custom-dropdown-menu::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-dropdown-menu::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.custom-dropdown-menu::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 4px;
+}
+
+.custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #764ba2;
 }
 
 .form-group input:focus,
@@ -232,6 +359,160 @@
   transform: translateY(0);
 }
 
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 15px;
+  padding: 0 30px;
+  margin-top: 20px;
+}
+
+.upload-button {
+  flex: 1;
+  margin: 0;
+}
+
+.cancel-button {
+  padding: 15px 30px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(231, 76, 60, 0.3);
+}
+
+.cancel-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Existing Tracks Section */
+.existing-tracks-section {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  margin-top: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.existing-tracks-section h2 {
+  color: #333;
+  font-size: 1.8rem;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.loading-tracks,
+.no-tracks {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.tracks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.track-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  border: 1px solid #e1e1e1;
+  transition: all 0.3s ease;
+}
+
+.track-item:hover {
+  background: #f0f0f0;
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.track-item-info {
+  flex: 1;
+}
+
+.track-item-info h3 {
+  color: #333;
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.track-item-info p {
+  color: #666;
+  font-size: 0.95rem;
+  margin: 4px 0;
+  line-height: 1.5;
+}
+
+.track-item-info strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.track-item-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.edit-button,
+.delete-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.edit-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.edit-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.delete-button {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+}
+
+.delete-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+}
+
+.edit-button:disabled,
+.delete-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Responsive Design */
 
 /* Large tablets and small desktops */
@@ -288,6 +569,42 @@
   .upload-button {
     width: calc(100% - 40px);
     margin: 20px 20px 0;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    padding: 0 20px;
+  }
+
+  .upload-button,
+  .cancel-button {
+    width: 100%;
+    margin: 0;
+  }
+
+  .existing-tracks-section {
+    padding: 25px 20px;
+    margin-top: 30px;
+  }
+
+  .existing-tracks-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .track-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .track-item-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .edit-button,
+  .delete-button {
+    flex: 1;
   }
 
   .form-section h2 {
@@ -503,6 +820,37 @@
     font-size: 0.9rem;
     width: calc(100% - 24px);
     margin: 15px 12px 0;
+  }
+
+  .form-actions {
+    padding: 0 12px;
+  }
+
+  .existing-tracks-section {
+    padding: 20px 15px;
+    margin-top: 25px;
+  }
+
+  .existing-tracks-section h2 {
+    font-size: 1.3rem;
+  }
+
+  .track-item {
+    padding: 15px;
+  }
+
+  .track-item-info h3 {
+    font-size: 1.1rem;
+  }
+
+  .track-item-info p {
+    font-size: 0.85rem;
+  }
+
+  .edit-button,
+  .delete-button {
+    padding: 8px 15px;
+    font-size: 0.85rem;
   }
 }
 
