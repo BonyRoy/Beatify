@@ -5,6 +5,7 @@ import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { FaHeart, FaRegHeart, FaBars } from 'react-icons/fa';
 import dance from '../Images/dance.gif';
 import './Play.css';
+import Artists from '../Components/Artists';
 
 const Play = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const Play = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [selectedArtist, setSelectedArtist] = useState(null);
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -65,6 +67,15 @@ const Play = () => {
       });
     }
 
+    // Filter by selected artist
+    if (selectedArtist) {
+      filtered = filtered.filter(track => {
+        const trackArtist = track.artist?.toLowerCase() || '';
+        const artistName = selectedArtist.toLowerCase();
+        return trackArtist.includes(artistName);
+      });
+    }
+
     // Filter by search query
     if (searchQuery.trim() !== '') {
       filtered = filtered.filter(track => {
@@ -79,7 +90,7 @@ const Play = () => {
     }
 
     setFilteredMusicList(filtered);
-  }, [searchQuery, musicList, showFavoritesOnly, favorites]);
+  }, [searchQuery, musicList, showFavoritesOnly, favorites, selectedArtist]);
 
   const playTrack = track => {
     setCurrentTrack(track);
@@ -181,6 +192,19 @@ const Play = () => {
             onChange={e => setSearchQuery(e.target.value)}
           />
         </div>
+      )}
+
+      {musicList.length > 0 && (
+        <Artists
+          searchQuery={searchQuery}
+          onArtistClick={artistName => {
+            // Toggle: if same artist clicked, deselect; otherwise select new artist
+            setSelectedArtist(prev =>
+              prev === artistName ? null : artistName
+            );
+          }}
+          selectedArtist={selectedArtist}
+        />
       )}
 
       {musicList.length === 0 ? (
