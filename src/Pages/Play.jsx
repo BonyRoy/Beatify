@@ -159,7 +159,11 @@ const Play = () => {
           <FaBars />
         </div>
         <div className='hamburger-dropdown'>
-          <button className='menu-item' onClick={() => navigate('/admin')}>
+          <button
+            disabled={true}
+            className='menu-item'
+            onClick={() => navigate('/admin')}
+          >
             Admin
           </button>
           <button
