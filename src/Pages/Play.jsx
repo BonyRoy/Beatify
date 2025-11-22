@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase/config';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import dance from '../Images/dance.gif';
@@ -11,6 +11,7 @@ const Play = () => {
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const audioRef = useRef(null);
 
   useEffect(() => {
     fetchMusicList();
@@ -59,6 +60,14 @@ const Play = () => {
     setCurrentTrack(track);
     setIsPlaying(true);
   };
+
+  useEffect(() => {
+    if (audioRef.current && isPlaying && currentTrack) {
+      audioRef.current.play().catch(error => {
+        console.error('Error playing audio:', error);
+      });
+    }
+  }, [currentTrack, isPlaying]);
 
   const downloadTrack = track => {
     window.open(track.fileUrl, '_blank');
@@ -119,7 +128,7 @@ const Play = () => {
               <div
                 key={track.id}
                 className={`track-card ${currentTrack?.id === track.id ? 'selected' : ''}`}
-                onClick={() => setCurrentTrack(track)}
+                onClick={() => playTrack(track)}
               >
                 <h3 className='track-name'>{track.name}</h3>
                 <p className='track-artist'>by {track.artist}</p>
@@ -181,6 +190,7 @@ const Play = () => {
             </p>
           </div>
           <audio
+            ref={audioRef}
             controls
             autoPlay={isPlaying}
             src={currentTrack.fileUrl}
