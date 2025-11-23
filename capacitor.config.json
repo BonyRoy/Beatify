@@ -1,0 +1,8 @@
+{
+  "appId": "com.beatify.app",
+  "appName": "Beatify",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
