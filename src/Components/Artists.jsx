@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import arjit from '../Images/arjitsingh.jpeg';
 import mohit from '../Images/mohit.webp';
 import rahet from '../Images/rahet.png';
@@ -32,7 +32,7 @@ import HarrdySandhu from '../Images/HarrdySandhu.webp';
 import VishalMishra from '../Images/VishalMishra.jpeg';
 
 const Artists = ({ searchQuery = '', onArtistClick, selectedArtist }) => {
-  const artists = [
+  const allArtists = [
     {
       id: 1,
       name: 'Arjit Singh',
@@ -191,6 +191,66 @@ const Artists = ({ searchQuery = '', onArtistClick, selectedArtist }) => {
     },
   ];
 
+  const [artists, setArtists] = useState(allArtists);
+
+  // Load clicked artists from localStorage and reorder on mount
+  useEffect(() => {
+    const clickedArtists = JSON.parse(
+      localStorage.getItem('clickedArtists') || '[]'
+    );
+
+    if (clickedArtists.length > 0) {
+      // Create a map for quick lookup
+      const artistMap = new Map(
+        allArtists.map(artist => [artist.name, artist])
+      );
+
+      // Separate clicked and non-clicked artists
+      const clicked = [];
+      const notClicked = [];
+
+      // Add clicked artists in order (most recent first)
+      clickedArtists.forEach(artistName => {
+        if (artistMap.has(artistName)) {
+          clicked.push(artistMap.get(artistName));
+        }
+      });
+
+      // Add remaining artists that weren't clicked
+      allArtists.forEach(artist => {
+        if (!clickedArtists.includes(artist.name)) {
+          notClicked.push(artist);
+        }
+      });
+
+      // Combine: clicked artists first, then others
+      setArtists([...clicked, ...notClicked]);
+    }
+  }, []);
+
+  // Handle artist click - save to localStorage only (reordering happens on reload)
+  const handleArtistClick = artistName => {
+    // Get current clicked artists from localStorage
+    const clickedArtists = JSON.parse(
+      localStorage.getItem('clickedArtists') || '[]'
+    );
+
+    // Remove if already exists (to avoid duplicates)
+    const updatedClicked = clickedArtists.filter(name => name !== artistName);
+
+    // Add to the beginning of the list (most recent first)
+    updatedClicked.unshift(artistName);
+
+    // Limit to last 10 clicked artists to avoid localStorage bloat
+    const limitedClicked = updatedClicked.slice(0, 10);
+
+    // Save to localStorage (reordering will happen on next reload)
+    localStorage.setItem('clickedArtists', JSON.stringify(limitedClicked));
+
+    // Call the original onArtistClick if provided
+    onArtistClick?.(artistName);
+  };
+
   // Filter artists based on search query
   const filteredArtists = searchQuery.trim()
     ? artists.filter(artist =>
@@ -214,7 +274,7 @@ const Artists = ({ searchQuery = '', onArtistClick, selectedArtist }) => {
           return (
             <div
               key={artist.id}
-              onClick={() => onArtistClick?.(artist.name)}
+              onClick={() => handleArtistClick(artist.name)}
               style={{
                 display: 'flex',
                 flexDirection: 'column',

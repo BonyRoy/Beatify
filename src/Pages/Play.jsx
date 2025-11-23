@@ -106,6 +106,25 @@ const Play = () => {
     }
   }, [currentTrack, isPlaying]);
 
+  const playNextTrack = () => {
+    if (!currentTrack || filteredMusicList.length === 0) return;
+
+    // Find current track index in filteredMusicList
+    const currentIndex = filteredMusicList.findIndex(
+      track => track.id === currentTrack.id
+    );
+
+    if (currentIndex === -1) return;
+
+    // Get next track index (loop to first if last)
+    const nextIndex = (currentIndex + 1) % filteredMusicList.length;
+    const nextTrack = filteredMusicList[nextIndex];
+
+    // Play next track
+    setCurrentTrack(nextTrack);
+    setIsPlaying(true);
+  };
+
   const downloadTrack = track => {
     window.open(track.fileUrl, '_blank');
   };
@@ -331,7 +350,7 @@ const Play = () => {
             controls
             autoPlay={isPlaying}
             src={currentTrack.fileUrl}
-            onEnded={() => setIsPlaying(false)}
+            onEnded={playNextTrack}
           >
             Your browser does not support the audio element.
           </audio>
