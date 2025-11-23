@@ -4,6 +4,11 @@ import { db } from '../firebase/config';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { FaHeart, FaRegHeart, FaBars } from 'react-icons/fa';
 import dance from '../Images/dance.gif';
+import dance2 from '../Images/dance2.gif';
+import dance3 from '../Images/dance3.gif';
+import dance4 from '../Images/dance4.gif';
+import dance5 from '../Images/dance5.gif';
+import dance6 from '../Images/dance6.gif';
 import './Play.css';
 import Artists from '../Components/Artists';
 
@@ -20,6 +25,33 @@ const Play = () => {
   const [selectedArtist, setSelectedArtist] = useState(null);
   const audioRef = useRef(null);
   const [showMenu, setShowMenu] = useState(false);
+
+  // Array of dance GIFs
+  const danceGifs = [dance];
+  // const danceGifs = [dance, dance2, dance3, dance4, dance5, dance6];
+
+  // Shuffle the GIFs on each reload
+  const [shuffledGifs, setShuffledGifs] = useState([]);
+
+  useEffect(() => {
+    // Fisher-Yates shuffle algorithm
+    const shuffleArray = array => {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    };
+
+    setShuffledGifs(shuffleArray(danceGifs));
+  }, []);
+
+  // Function to get a dance GIF for each track
+  const getRandomDanceGif = trackIndex => {
+    if (shuffledGifs.length === 0) return dance; // fallback
+    return shuffledGifs[trackIndex % shuffledGifs.length];
+  };
 
   useEffect(() => {
     fetchMusicList();
@@ -278,7 +310,7 @@ const Play = () => {
           </div>
         ) : (
           <div className='music-grid'>
-            {filteredMusicList.map(track => (
+            {filteredMusicList.map((track, index) => (
               <div
                 key={track.id}
                 className={`track-card ${currentTrack?.id === track.id ? 'selected' : ''}`}
@@ -322,10 +354,11 @@ const Play = () => {
                       style={{
                         borderRadius: '31px',
                         width: '60%',
-                        height: 'auto',
+                        height: '62.6px',
                         objectFit: 'cover',
                       }}
-                      src={dance}
+                      src={getRandomDanceGif(index)}
+                      alt='Dancing animation'
                     />
                   </div>
                   <span>Released: {formatReleaseDate(track.releaseDate)}</span>
