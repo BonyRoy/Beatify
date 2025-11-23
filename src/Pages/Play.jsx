@@ -165,7 +165,7 @@ const Play = () => {
       </div>
 
       {/* Hamburger Menu */}
-      <div className='hamburger-menu-container'>
+      <div style={{ paddingTop: '40px' }} className='hamburger-menu-container'>
         <div className='hamburger-icon'>
           <FaBars />
         </div>
