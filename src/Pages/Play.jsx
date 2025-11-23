@@ -182,7 +182,7 @@ const Play = () => {
       </div>
 
       {/* Hamburger Menu */}
-      <div className='hamburger-menu-container'>
+      <div style={{ paddingTop: '20px' }} className='hamburger-menu-container'>
         <div
           className='hamburger-icon'
           onClick={() => setShowMenu(prev => !prev)} // <-- toggle
