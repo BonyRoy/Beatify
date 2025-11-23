@@ -361,8 +361,16 @@ const Play = () => {
                       alt='Dancing animation'
                     />
                   </div>
-                  <span>Released: {formatReleaseDate(track.releaseDate)}</span>
-                  <span>Size: {formatFileSize(track.fileSize)}</span>
+                </div>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between' }}
+                >
+                  <span style={{ fontSize: '0.6rem' }}>
+                    Released: {formatReleaseDate(track.releaseDate)}
+                  </span>
+                  <span style={{ fontSize: '0.6rem' }}>
+                    Size: {formatFileSize(track.fileSize)}
+                  </span>
                 </div>
               </div>
             ))}

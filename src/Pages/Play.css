@@ -358,7 +358,7 @@
 .track-genre {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 4px 12px;
+  padding: 4px;
   border-radius: 15px;
   font-size: 0.85rem;
   font-weight: 500;
@@ -373,7 +373,7 @@
   width: 100%;
   border-radius: 15px;
   background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-  padding: 4px 12px;
+  padding: 4px;
   position: relative;
   min-width: 0;
   flex-shrink: 1;
