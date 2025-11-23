@@ -16,7 +16,6 @@ const AppContent = () => {
 
   return (
     <main
-      style={{ paddingTop: '40px' }}
       className={`main-content ${isAdmin ? 'admin-bg' : ''} ${isPlay ? 'play-bg' : ''}`}
     >
       <Routes>
