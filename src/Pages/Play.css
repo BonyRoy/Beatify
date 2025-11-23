@@ -14,7 +14,7 @@
 
 .play-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 10px;
   color: white;
   position: relative;
   flex-shrink: 0;
@@ -22,12 +22,12 @@
 
 .play-header h1 {
   font-size: 2.5rem;
-  margin-bottom: 10px;
+  /* margin-bottom: 10px; */
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .play-header p {
-  font-size: 1.2rem;
+  font-size: 1rem;
   opacity: 0.9;
 }
 
@@ -172,7 +172,7 @@
 /* Search Container */
 .search-container {
   width: 100%;
-  margin-bottom: 30px;
+  /* margin-bottom: 10px; */
   flex-shrink: 0;
 }
 
@@ -229,6 +229,7 @@
   gap: 25px;
   padding-bottom: 20px;
   margin-bottom: 80px;
+
 }
 
 .track-card {
@@ -319,10 +320,27 @@
 }
 
 .track-artist {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   color: #666;
-  margin-bottom: 15px;
+  margin-bottom: 8px;
   font-weight: 500;
+}
+
+.track-grid-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 10px;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.track-image-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .track-details {
@@ -330,6 +348,11 @@
   gap: 15px;
   margin-bottom: 15px;
   flex-wrap: wrap;
+  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
+  justify-content: center;
+  align-items: center;
 }
 
 .track-genre {
@@ -339,15 +362,57 @@
   border-radius: 15px;
   font-size: 0.85rem;
   font-weight: 500;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.track-album-container {
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 100%;
+  width: 100%;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+  padding: 4px 12px;
+  position: relative;
+  min-width: 0;
+  flex-shrink: 1;
+  box-sizing: border-box;
+}
+
+.track-album-wrapper {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: marquee 15s linear infinite;
+  will-change: transform;
+}
+
+.track-album-container:hover .track-album-wrapper {
+  animation-play-state: paused;
 }
 
 .track-album {
-  background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+  display: inline-block;
   color: white;
-  padding: 4px 12px;
-  border-radius: 15px;
   font-size: 0.85rem;
   font-weight: 500;
+  white-space: nowrap;
+  padding-right: 30px;
+  flex-shrink: 0;
+}
+
+.track-album-duplicate {
+  padding-right: 0;
+  flex-shrink: 0;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .track-meta {
@@ -428,15 +493,22 @@
 .audio-player {
   position: fixed;
   bottom: 80px;
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  left: 46.5%;
+  transform: translateX(-50%);
+  width: calc(100% - 40px);
+  max-width: 800px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 31px;
   padding: 20px;
-  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
   z-index: 1000;
-  border-bottom: none;
+  margin: 0 20px;
+  bor
 }
 
 /* Fixed Action Bar */
@@ -494,13 +566,13 @@
 
 .player-info h4 {
   color: #333;
-  font-size: 1.2rem;
+  font-size: 1rem;
   margin-bottom: 5px;
 }
 
 .player-info p {
   color: #666;
-  font-size: 1rem;
+  font-size: 0.8rem;
 }
 
 .audio-player audio {
@@ -522,8 +594,8 @@
 
   .music-grid {
     grid-template-columns: 1fr;
-    gap: 20px;
-    padding-bottom: 20px;
+    gap: 10px;
+    padding-bottom: 60px;
   }
 
   .search-input {
@@ -532,10 +604,11 @@
   }
 
   .audio-player {
-    bottom: 70px;
+    bottom: 4px;
     padding: 15px;
-    border-radius: 0;
-    margin: 0;
+    border-radius: 31px;
+    margin: 0 14px;
+    width: calc(100% - 30px);
   }
 
   .fixed-action-bar {
@@ -575,11 +648,11 @@
   }
 
   .track-card {
-    padding: 20px;
+    padding: 10px;
   }
 
   .track-name {
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
 
   .heart-icon {
@@ -601,6 +674,7 @@
 
   .audio-player {
     padding: 15px;
+    border-radius: 31px;
   }
 }
 

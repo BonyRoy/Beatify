@@ -19,6 +19,7 @@ const Play = () => {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState(null);
   const audioRef = useRef(null);
+  const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
     fetchMusicList();
@@ -140,6 +141,22 @@ const Play = () => {
     return date.toLocaleDateString();
   };
 
+  const formatReleaseDate = dateString => {
+    if (!dateString) return 'Unknown';
+    // If it's already in YYYY-MM-DD format
+    if (dateString.includes('-')) {
+      const [year, month, day] = dateString.split('-');
+      return `${day}/${month}/${year}`;
+    }
+    // If it's a date object or timestamp
+    const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // Return as-is if invalid date
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const formatFileSize = bytes => {
     if (!bytes) return 'Unknown';
     const mb = bytes / (1024 * 1024);
@@ -166,20 +183,30 @@ const Play = () => {
 
       {/* Hamburger Menu */}
       <div className='hamburger-menu-container'>
-        <div className='hamburger-icon'>
+        <div
+          className='hamburger-icon'
+          onClick={() => setShowMenu(prev => !prev)} // <-- toggle
+        >
           <FaBars />
         </div>
-        <div className='hamburger-dropdown'>
-          <button className='menu-item' onClick={() => navigate('/admin')}>
-            Admin
-          </button>
-          <button
-            className='menu-item'
-            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-          >
-            {showFavoritesOnly ? 'Show All' : 'Favorites'}
-          </button>
-        </div>
+
+        {showMenu && ( // <-- conditionally rendered menu
+          <div className='hamburger-dropdown'>
+            {/* <button
+              disabled={true}
+              className='menu-item'
+              onClick={() => navigate('/admin')}
+            >
+              Admin
+            </button> */}
+            <button
+              className='menu-item'
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            >
+              {showFavoritesOnly ? 'Show All' : 'Favorites'}
+            </button>
+          </div>
+        )}
       </div>
 
       {musicList.length > 0 && (
@@ -214,7 +241,7 @@ const Play = () => {
           <div className='empty-state'>
             <div className='empty-icon'>🎵</div>
             <h2>No Music Found</h2>
-            <p>Upload some tracks in the Admin panel to get started!</p>
+            <p>Ask Admin to upload some tracks in the panel to get started!</p>
           </div>
         ) : filteredMusicList.length === 0 && showFavoritesOnly ? (
           <div className='empty-state'>
@@ -257,38 +284,21 @@ const Play = () => {
                   </button>
                 </div>
                 <p className='track-artist'>by {track.artist}</p>
-                <div className='track-details'>
-                  <span className='track-genre'>{track.genre}</span>
-                  <span className='track-album'>
-                    Movie/Album: {track.album}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '10px',
-                  }}
-                >
-                  <div className='track-meta'>
-                    <span>Released: {track.releaseDate}</span>
-                    <span>Size: {formatFileSize(track.fileSize)}</span>
-
-                    {/* <span>Uploaded: {formatDate(track.uploadedAt)}</span> */}
-                    {/* {track.uuid && (
-                    <span className='track-uuid'>
-                      UUID: <code>{track.uuid}</code>
-                    </span>
-                  )} */}
+                <div className='track-grid-container'>
+                  <div className='track-details'>
+                    <span className='track-genre'>{track.genre}</span>
+                    <div className='track-album-container'>
+                      <div className='track-album-wrapper'>
+                        <span className='track-album'>
+                          Movie/Album: {track.album}
+                        </span>
+                        <span className='track-album track-album-duplicate'>
+                          Movie/Album: {track.album}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '10px',
-                    }}
-                  >
+                  <div className='track-image-container'>
                     <img
                       style={{
                         borderRadius: '31px',
@@ -299,6 +309,8 @@ const Play = () => {
                       src={dance}
                     />
                   </div>
+                  <span>Released: {formatReleaseDate(track.releaseDate)}</span>
+                  <span>Size: {formatFileSize(track.fileSize)}</span>
                 </div>
               </div>
             ))}
@@ -326,20 +338,13 @@ const Play = () => {
         </div>
       )}
 
-      <div className='fixed-action-bar'>
-        {currentTrack ? (
-          <button
-            className='fixed-download-button'
-            onClick={() => downloadTrack(currentTrack)}
-          >
-            📥 Download
-          </button>
-        ) : (
+      {!currentTrack && (
+        <div className='fixed-action-bar'>
           <div className='no-track-selected'>
             Select a track to play/download
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
