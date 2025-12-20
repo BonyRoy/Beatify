@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase/config';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { FaHeart, FaRegHeart, FaBars } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaBars, FaMusic, FaList } from 'react-icons/fa';
 import dance from '../Images/dance.gif';
 import dance2 from '../Images/dance2.gif';
 import dance3 from '../Images/dance3.gif';
@@ -11,6 +11,21 @@ import dance5 from '../Images/dance5.gif';
 import dance6 from '../Images/dance6.gif';
 import './Play.css';
 import Artists from '../Components/Artists';
+import Playlists from '../Components/Playlists';
+
+// Theme gradients array
+const THEMES = [
+  'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', // Pink-Red
+  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Purple-Violet
+  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', // Green-Cyan
+  'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', // Pink-Yellow
+  'linear-gradient(135deg, #30cfd0 0%, #330867 100%)', // Cyan-Purple
+  'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', // Mint-Pink
+  'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', // Coral-Pink
+  'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', // Peach
+  'linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%)', // Red-Blue
+  'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)', // Lavender-Blue
+];
 
 const Play = () => {
   const navigate = useNavigate();
@@ -21,10 +36,14 @@ const Play = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState(new Set());
+  const [playlistFavorites, setPlaylistFavorites] = useState(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState(null);
   const audioRef = useRef(null);
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
+  const [showPlaylists, setShowPlaylists] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState(0);
 
   // Array of dance GIFs
   const danceGifs = [dance];
@@ -65,7 +84,50 @@ const Play = () => {
         console.error('Error loading favorites:', error);
       }
     }
+
+    // Load playlist favorites from localStorage
+    const savedPlaylistFavorites = localStorage.getItem(
+      'beatifyPlaylistFavorites'
+    );
+    if (savedPlaylistFavorites) {
+      try {
+        const playlistNames = JSON.parse(savedPlaylistFavorites);
+        setPlaylistFavorites(new Set(playlistNames));
+      } catch (error) {
+        console.error('Error loading playlist favorites:', error);
+      }
+    }
+
+    // Load theme from localStorage
+    const savedTheme = localStorage.getItem('beatifyTheme');
+    if (savedTheme !== null) {
+      try {
+        const themeIndex = parseInt(savedTheme, 10);
+        if (themeIndex >= 0 && themeIndex < THEMES.length) {
+          setCurrentTheme(themeIndex);
+        }
+      } catch (error) {
+        console.error('Error loading theme:', error);
+      }
+    }
   }, []);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = event => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
 
   const fetchMusicList = async () => {
     try {
@@ -186,6 +248,34 @@ const Play = () => {
     });
   };
 
+  const togglePlaylistFavorite = (playlistName, e) => {
+    e.stopPropagation(); // Prevent card click when clicking heart
+
+    setPlaylistFavorites(prevFavorites => {
+      const newFavorites = new Set(prevFavorites);
+      if (newFavorites.has(playlistName)) {
+        newFavorites.delete(playlistName);
+      } else {
+        newFavorites.add(playlistName);
+      }
+      // Save playlist names to localStorage
+      const playlistNames = [...newFavorites];
+      localStorage.setItem(
+        'beatifyPlaylistFavorites',
+        JSON.stringify(playlistNames)
+      );
+      return newFavorites;
+    });
+  };
+
+  const shuffleTheme = () => {
+    setCurrentTheme(prevTheme => {
+      const nextTheme = (prevTheme + 1) % THEMES.length;
+      localStorage.setItem('beatifyTheme', nextTheme.toString());
+      return nextTheme;
+    });
+  };
+
   const formatDate = timestamp => {
     if (!timestamp) return 'Unknown';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -226,14 +316,19 @@ const Play = () => {
   }
 
   return (
-    <div className='play-container'>
+    <div
+      className='play-container'
+      style={{ background: THEMES[currentTheme] }}
+    >
       <div className='play-header'>
         <h1>🎧 Beatify</h1>
-        <p>Hit play with no delay and enjoy your music your way!!</p>
+        <p style={{ paddingTop: '10px' }}>
+          Where Music Finds You & Every Beat Moves You.
+        </p>
       </div>
 
       {/* Hamburger Menu */}
-      <div style={{ paddingTop: '20px' }} className='hamburger-menu-container'>
+      <div className='hamburger-menu-container' ref={menuRef}>
         <div
           className='hamburger-icon'
           onClick={() => setShowMenu(prev => !prev)} // <-- toggle
@@ -253,8 +348,66 @@ const Play = () => {
             <button
               className='menu-item'
               onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+              }}
             >
-              {showFavoritesOnly ? 'Show All' : 'Favorites'}
+              {showFavoritesOnly ? (
+                <>
+                  <FaList style={{ fontSize: '18px' }} />
+                  Show All
+                </>
+              ) : (
+                <>
+                  <FaHeart style={{ fontSize: '18px', color: '#ff4757' }} />
+                  Favorites
+                </>
+              )}
+            </button>
+            <button
+              className='menu-item'
+              onClick={() => setShowPlaylists(!showPlaylists)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+              }}
+            >
+              {showPlaylists ? (
+                <>
+                  <FaMusic style={{ fontSize: '18px' }} />
+                  Show Tracks
+                </>
+              ) : (
+                <>
+                  <FaList style={{ fontSize: '18px' }} />
+                  Playlists
+                </>
+              )}
+            </button>
+            <button
+              className='menu-item'
+              onClick={shuffleTheme}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+              }}
+            >
+              <div
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: THEMES[currentTheme],
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                  flexShrink: 0,
+                }}
+              />
+              Theme
             </button>
           </div>
         )}
@@ -265,120 +418,143 @@ const Play = () => {
           <input
             type='text'
             className='search-input'
-            placeholder='🔍 Search by song, artist, genre, or album...'
+            placeholder={
+              showPlaylists
+                ? '🔍 Search playlists...'
+                : '🔍 Search by song, artist, genre, or album...'
+            }
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
           />
         </div>
       )}
 
-      {musicList.length > 0 && (
-        <div className='artists-section'>
-          <Artists
-            searchQuery={searchQuery}
-            onArtistClick={artistName => {
-              // Toggle: if same artist clicked, deselect; otherwise select new artist
-              setSelectedArtist(prev =>
-                prev === artistName ? null : artistName
-              );
-            }}
-            selectedArtist={selectedArtist}
-          />
-        </div>
-      )}
+      {showPlaylists ? (
+        <Playlists
+          searchQuery={searchQuery}
+          favorites={playlistFavorites}
+          onToggleFavorite={togglePlaylistFavorite}
+          showFavoritesOnly={showFavoritesOnly}
+        />
+      ) : (
+        <>
+          {musicList.length > 0 && (
+            <div className='artists-section'>
+              <Artists
+                searchQuery={searchQuery}
+                onArtistClick={artistName => {
+                  // Toggle: if same artist clicked, deselect; otherwise select new artist
+                  setSelectedArtist(prev =>
+                    prev === artistName ? null : artistName
+                  );
+                }}
+                selectedArtist={selectedArtist}
+              />
+            </div>
+          )}
 
-      <div className='scrollable-content'>
-        {musicList.length === 0 ? (
-          <div className='empty-state'>
-            <div className='empty-icon'>🎵</div>
-            <h2>No Music Found</h2>
-            <p>Ask Admin to upload some tracks in the panel to get started!</p>
-          </div>
-        ) : filteredMusicList.length === 0 && showFavoritesOnly ? (
-          <div className='empty-state'>
-            <div className='empty-icon'>❤️</div>
-            <h2>No Favorites Yet</h2>
-            <p>
-              Start adding songs to your favorites by clicking the heart icon!
-            </p>
-          </div>
-        ) : filteredMusicList.length === 0 ? (
-          <div className='empty-state'>
-            <div className='empty-icon'>🔍</div>
-            <h2>No Results Found</h2>
-            <p>Try adjusting your search query.</p>
-          </div>
-        ) : (
-          <div className='music-grid'>
-            {filteredMusicList.map((track, index) => (
-              <div
-                key={track.id}
-                className={`track-card ${currentTrack?.id === track.id ? 'selected' : ''}`}
-                onClick={() => playTrack(track)}
-              >
-                <div className='track-header'>
-                  <h3 className='track-name'>{track.name}</h3>
-                  <button
-                    className='favorite-button'
-                    onClick={e => toggleFavorite(track, e)}
-                    aria-label={
-                      favorites.has(track.uuid || track.id)
-                        ? 'Remove from favorites'
-                        : 'Add to favorites'
-                    }
+          <div className='scrollable-content'>
+            {musicList.length === 0 ? (
+              <div className='empty-state'>
+                <div className='empty-icon'>🎵</div>
+                <h2>No Music Found</h2>
+                <p>
+                  Ask Admin to upload some tracks in the panel to get started!
+                </p>
+              </div>
+            ) : filteredMusicList.length === 0 && showFavoritesOnly ? (
+              <div className='empty-state'>
+                <div className='empty-icon'>❤️</div>
+                <h2>No Favorites Yet</h2>
+                <p>
+                  Start adding songs to your favorites by clicking the heart
+                  icon!
+                </p>
+              </div>
+            ) : filteredMusicList.length === 0 ? (
+              <div className='empty-state'>
+                <div className='empty-icon'>🔍</div>
+                <h2>No Results Found</h2>
+                <p>Try adjusting your search query.</p>
+              </div>
+            ) : (
+              <div className='music-grid'>
+                {filteredMusicList.map((track, index) => (
+                  <div
+                    key={track.id}
+                    className={`track-card ${currentTrack?.id === track.id ? 'selected' : ''}`}
+                    onClick={() => playTrack(track)}
                   >
-                    {favorites.has(track.uuid || track.id) ? (
-                      <FaHeart className='heart-icon filled' />
-                    ) : (
-                      <FaRegHeart className='heart-icon outline' />
-                    )}
-                  </button>
-                </div>
-                <p className='track-artist'>by {track.artist}</p>
-                <div className='track-grid-container'>
-                  <div className='track-details'>
-                    <span className='track-genre'>{track.genre}</span>
-                    <div className='track-album-container'>
-                      <div className='track-album-wrapper'>
-                        <span className='track-album'>
-                          Movie/Album: {track.album}
-                        </span>
-                        <span className='track-album track-album-duplicate'>
-                          Movie/Album: {track.album}
-                        </span>
+                    <div className='track-header'>
+                      <div>
+                        <h3 className='track-name'>{track.name}</h3>
+                        <p className='track-artist'>by {track.artist}</p>
+                      </div>
+                      <button
+                        className='favorite-button'
+                        onClick={e => toggleFavorite(track, e)}
+                        aria-label={
+                          favorites.has(track.uuid || track.id)
+                            ? 'Remove from favorites'
+                            : 'Add to favorites'
+                        }
+                      >
+                        {favorites.has(track.uuid || track.id) ? (
+                          <FaHeart className='heart-icon filled' />
+                        ) : (
+                          <FaRegHeart className='heart-icon outline' />
+                        )}
+                      </button>
+                    </div>
+                    <div className='track-grid-container'>
+                      <div className='track-details'>
+                        {/* <span className='track-genre'>{track.genre}</span> */}
+                        <div className='track-album-container'>
+                          <div className='track-album-wrapper'>
+                            <span className='track-album'>
+                              Movie/Album: {track.album}
+                            </span>
+                            <span className='track-album track-album-duplicate'>
+                              Movie/Album: {track.album}
+                            </span>
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <span style={{ fontSize: '0.6rem' }}>
+                            Released: {formatReleaseDate(track.releaseDate)}
+                          </span>
+                          <span style={{ fontSize: '0.6rem' }}>
+                            Size: {formatFileSize(track.fileSize)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className='track-image-container'>
+                        <img
+                          style={{
+                            borderRadius: '31px',
+                            width: '60%',
+                            height: '62.6px',
+                            objectFit: 'cover',
+                          }}
+                          src={getRandomDanceGif(index)}
+                          alt='Dancing animation'
+                        />
                       </div>
                     </div>
                   </div>
-                  <div className='track-image-container'>
-                    <img
-                      style={{
-                        borderRadius: '31px',
-                        width: '60%',
-                        height: '62.6px',
-                        objectFit: 'cover',
-                      }}
-                      src={getRandomDanceGif(index)}
-                      alt='Dancing animation'
-                    />
-                  </div>
-                </div>
-                <div
-                  style={{ display: 'flex', justifyContent: 'space-between' }}
-                >
-                  <span style={{ fontSize: '0.6rem' }}>
-                    Released: {formatReleaseDate(track.releaseDate)}
-                  </span>
-                  <span style={{ fontSize: '0.6rem' }}>
-                    Size: {formatFileSize(track.fileSize)}
-                  </span>
-                </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
 
-      {currentTrack && (
+      {!showPlaylists && currentTrack && (
         <div className='audio-player'>
           <div className='player-info'>
             <h4>{currentTrack.name}</h4>
@@ -398,7 +574,7 @@ const Play = () => {
         </div>
       )}
 
-      {!currentTrack && (
+      {!showPlaylists && !currentTrack && (
         <div className='fixed-action-bar'>
           <div className='no-track-selected'>
             Select a track to play/download

@@ -30,12 +30,16 @@ import AyushmannKhurrana from '../Images/AyushmannKhurrana.jpeg';
 import ArmaanMalik from '../Images/ArmaanMalik.webp';
 import HarrdySandhu from '../Images/HarrdySandhu.webp';
 import VishalMishra from '../Images/VishalMishra.jpeg';
+import HarshitSaxena from '../Images/Harshit Saxena .jpeg';
+import AlkaYagnik from '../Images/Alka Yagnik.jpg';
+import UditNarayan from '../Images/Udit Narayan.jpeg';
+import KumarSanu from '../Images/Kumar Sanu.jpeg';
 
 const Artists = ({ searchQuery = '', onArtistClick, selectedArtist }) => {
   const allArtists = [
     {
       id: 1,
-      name: 'Arjit Singh',
+      name: 'Arijit Singh',
       image: arjit,
     },
     {
@@ -189,6 +193,26 @@ const Artists = ({ searchQuery = '', onArtistClick, selectedArtist }) => {
       name: 'Vishal Mishra',
       image: VishalMishra,
     },
+    {
+      id: 32,
+      name: 'Harshit Saxena',
+      image: HarshitSaxena,
+    },
+    {
+      id: 33,
+      name: 'Alka Yagnik',
+      image: AlkaYagnik,
+    },
+    {
+      id: 34,
+      name: 'Udit Narayan',
+      image: UditNarayan,
+    },
+    {
+      id: 35,
+      name: 'Kumar Sanu',
+      image: KumarSanu,
+    },
   ];
 
   const [artists, setArtists] = useState(allArtists);
@@ -262,7 +286,7 @@ const Artists = ({ searchQuery = '', onArtistClick, selectedArtist }) => {
     <>
       <div
         style={{
-          padding: '10px',
+          padding: '10px 0px',
           display: 'flex',
           flexDirection: 'row',
           overflowX: 'auto',

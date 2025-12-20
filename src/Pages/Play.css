@@ -179,7 +179,8 @@
 /* Artists Section */
 .artists-section {
   flex-shrink: 0;
-  margin-bottom: 20px;
+  margin-bottom: 4px;
+  margin-left: -10px;
 }
 
 .search-input {
@@ -261,7 +262,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 15px;
-  margin-bottom: 8px;
+  /* margin-bottom: 8px; */
 }
 
 .track-name {
@@ -596,6 +597,7 @@
     grid-template-columns: 1fr;
     gap: 10px;
     padding-bottom: 60px;
+    padding-top: 10px;
   }
 
   .search-input {
@@ -612,7 +614,7 @@
   }
 
   .fixed-action-bar {
-    padding: 12px 15px;
+    padding: 4px 10px;
     gap: 10px;
     border-radius: 0;
     left: 0;
