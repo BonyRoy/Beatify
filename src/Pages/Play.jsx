@@ -1,17 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase/config';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { FaHeart, FaRegHeart, FaBars, FaMusic, FaList } from 'react-icons/fa';
+import {
+  FaHeart,
+  FaRegHeart,
+  FaBars,
+  FaMusic,
+  FaList,
+  FaHeadphones,
+  FaSearch,
+} from 'react-icons/fa';
 import dance from '../Images/dance.gif';
-import dance2 from '../Images/dance2.gif';
-import dance3 from '../Images/dance3.gif';
-import dance4 from '../Images/dance4.gif';
-import dance5 from '../Images/dance5.gif';
-import dance6 from '../Images/dance6.gif';
+// import dance2 from '../Images/dance2.gif';
+// import dance3 from '../Images/dance3.gif';
+// import dance4 from '../Images/dance4.gif';
+// import dance5 from '../Images/dance5.gif';
+// import dance6 from '../Images/dance6.gif';
 import './Play.css';
 import Artists from '../Components/Artists';
 import Playlists from '../Components/Playlists';
+import PlaylistDetail from '../Components/PlaylistDetail';
 
 // Theme gradients array
 const THEMES = [
@@ -27,8 +36,35 @@ const THEMES = [
   'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)', // Lavender-Blue
 ];
 
+// Hardcoded playlist track mappings
+const playlistTracks = {
+  'Old Melodies': [],
+  'Romantic Hits': [],
+  'Party Anthems': [],
+  'Chill Vibes': [],
+  'Workout Mix': [],
+  EDM: [],
+  Global: [],
+  Thar: [
+    '4de44c58-7b04-4934-9774-ce0ede19cee8',
+    '5c120cbd-8274-458a-9554-d60bb6ae1014',
+    'aae0a4cc-4c88-4af5-a93f-d89f3e5f051e',
+    'a07902d5-12ed-4bea-b3fe-d1f8b93b0a4c',
+    'c64a9313-f6d7-4298-a16b-45611a9d0ed4',
+    '2b4c3553-fb3a-4aed-9134-2227c7965ad2',
+    '340837c7-8ff6-4f22-bd4f-17f24466ed05',
+    '990e2d10-890d-4ce7-a819-b043b57e811a',
+    'b9915cc9-9a59-4757-9227-c86e27f0c260',
+    'c315071c-4f54-4ddd-b8b2-c0e409ed4cca',
+    '340c96d5-8926-44b1-856c-e1a7076e0331',
+    '332dfa14-6e0d-460d-a35f-78495b1b9cb0',
+    '439bb5df-b96d-4e1c-8ef3-e688b1e75edd',
+    '5a9cf65b-57b7-4857-9f42-03ee40ee4c97',
+  ],
+};
+
 const Play = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [musicList, setMusicList] = useState([]);
   const [filteredMusicList, setFilteredMusicList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +80,7 @@ const Play = () => {
   const menuRef = useRef(null);
   const [showPlaylists, setShowPlaylists] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(0);
+  const [selectedPlaylist, setSelectedPlaylist] = useState(null);
 
   // Array of dance GIFs
   const danceGifs = [dance];
@@ -219,9 +256,9 @@ const Play = () => {
     setIsPlaying(true);
   };
 
-  const downloadTrack = track => {
-    window.open(track.fileUrl, '_blank');
-  };
+  // const downloadTrack = track => {
+  //   window.open(track.fileUrl, '_blank');
+  // };
 
   const toggleFavorite = (track, e) => {
     e.stopPropagation(); // Prevent card click when clicking heart
@@ -276,11 +313,11 @@ const Play = () => {
     });
   };
 
-  const formatDate = timestamp => {
-    if (!timestamp) return 'Unknown';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString();
-  };
+  // const formatDate = timestamp => {
+  //   if (!timestamp) return 'Unknown';
+  //   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  //   return date.toLocaleDateString();
+  // };
 
   const formatReleaseDate = dateString => {
     if (!dateString) return 'Unknown';
@@ -315,13 +352,35 @@ const Play = () => {
     );
   }
 
+  // Show playlist detail view when a playlist is selected
+  if (selectedPlaylist && playlistTracks[selectedPlaylist]) {
+    return (
+      <PlaylistDetail
+        playlistName={selectedPlaylist}
+        trackIds={playlistTracks[selectedPlaylist]}
+        onBack={() => setSelectedPlaylist(null)}
+        currentTheme={THEMES[currentTheme]}
+        favorites={favorites}
+        onToggleFavorite={toggleFavorite}
+        formatReleaseDate={formatReleaseDate}
+        formatFileSize={formatFileSize}
+        getRandomDanceGif={getRandomDanceGif}
+      />
+    );
+  }
+
   return (
     <div
       className='play-container'
       style={{ background: THEMES[currentTheme] }}
     >
       <div className='play-header'>
-        <h1>🎧 Beatify</h1>
+        <h1>
+          <FaHeadphones
+            style={{ marginRight: '10px', verticalAlign: 'middle' }}
+          />
+          Beatify
+        </h1>
         <p style={{ paddingTop: '10px' }}>
           Where Music Finds You & Every Beat Moves You.
         </p>
@@ -413,29 +472,46 @@ const Play = () => {
         )}
       </div>
 
-      {musicList.length > 0 && (
-        <div className='search-container'>
-          <input
-            type='text'
-            className='search-input'
-            placeholder={
-              showPlaylists
-                ? '🔍 Search playlists...'
-                : '🔍 Search by song, artist, genre, or album...'
-            }
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
-        </div>
-      )}
-
       {showPlaylists ? (
-        <Playlists
-          searchQuery={searchQuery}
-          favorites={playlistFavorites}
-          onToggleFavorite={togglePlaylistFavorite}
-          showFavoritesOnly={showFavoritesOnly}
-        />
+        <>
+          {musicList.length > 0 && (
+            <div className='search-container'>
+              <div style={{ position: 'relative', width: '100%' }}>
+                <FaSearch
+                  style={{
+                    position: 'absolute',
+                    left: '20px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '1rem',
+                    zIndex: 1,
+                    pointerEvents: 'none',
+                  }}
+                />
+                <input
+                  type='text'
+                  className='search-input'
+                  placeholder='Search playlists...'
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{ paddingLeft: '50px' }}
+                />
+              </div>
+            </div>
+          )}
+          <Playlists
+            searchQuery={searchQuery}
+            favorites={playlistFavorites}
+            onToggleFavorite={togglePlaylistFavorite}
+            showFavoritesOnly={showFavoritesOnly}
+            currentTrack={currentTrack}
+            onPlaylistClick={playlistName => {
+              setSelectedPlaylist(playlistName);
+            }}
+            selectedPlaylist={selectedPlaylist}
+          />
+        </>
       ) : (
         <>
           {musicList.length > 0 && (
@@ -452,11 +528,39 @@ const Play = () => {
               />
             </div>
           )}
+          {musicList.length > 0 && (
+            <div className='search-container'>
+              <div style={{ position: 'relative', width: '100%' }}>
+                <FaSearch
+                  style={{
+                    position: 'absolute',
+                    left: '20px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '1rem',
+                    zIndex: 1,
+                    pointerEvents: 'none',
+                  }}
+                />
+                <input
+                  type='text'
+                  className='search-input'
+                  placeholder='Search by song, artist, genre, or album...'
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{ paddingLeft: '50px' }}
+                />
+              </div>
+            </div>
+          )}
 
           <div className='scrollable-content'>
             {musicList.length === 0 ? (
               <div className='empty-state'>
-                <div className='empty-icon'>🎵</div>
+                <div className='empty-icon'>
+                  <FaMusic style={{ fontSize: '4rem', color: '#667eea' }} />
+                </div>
                 <h2>No Music Found</h2>
                 <p>
                   Ask Admin to upload some tracks in the panel to get started!
@@ -464,7 +568,9 @@ const Play = () => {
               </div>
             ) : filteredMusicList.length === 0 && showFavoritesOnly ? (
               <div className='empty-state'>
-                <div className='empty-icon'>❤️</div>
+                <div className='empty-icon'>
+                  <FaHeart style={{ fontSize: '4rem', color: '#e74c3c' }} />
+                </div>
                 <h2>No Favorites Yet</h2>
                 <p>
                   Start adding songs to your favorites by clicking the heart
@@ -473,12 +579,19 @@ const Play = () => {
               </div>
             ) : filteredMusicList.length === 0 ? (
               <div className='empty-state'>
-                <div className='empty-icon'>🔍</div>
+                <div className='empty-icon'>
+                  <FaSearch style={{ fontSize: '4rem', color: '#667eea' }} />
+                </div>
                 <h2>No Results Found</h2>
                 <p>Try adjusting your search query.</p>
               </div>
             ) : (
-              <div className='music-grid'>
+              <div
+                className='music-grid'
+                style={{
+                  paddingBottom: currentTrack ? '68px' : '0px',
+                }}
+              >
                 {filteredMusicList.map((track, index) => (
                   <div
                     key={track.id}
@@ -523,12 +636,25 @@ const Play = () => {
                           style={{
                             display: 'flex',
                             justifyContent: 'space-between',
+                            gap: '10px',
                           }}
                         >
-                          <span style={{ fontSize: '0.6rem' }}>
+                          <span
+                            style={{
+                              fontSize: '0.6rem',
+                              color: 'rgba(255, 255, 255, 0.8)',
+                              textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+                            }}
+                          >
                             Released: {formatReleaseDate(track.releaseDate)}
                           </span>
-                          <span style={{ fontSize: '0.6rem' }}>
+                          <span
+                            style={{
+                              fontSize: '0.6rem',
+                              color: 'rgba(255, 255, 255, 0.8)',
+                              textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+                            }}
+                          >
                             Size: {formatFileSize(track.fileSize)}
                           </span>
                         </div>
@@ -554,7 +680,7 @@ const Play = () => {
         </>
       )}
 
-      {!showPlaylists && currentTrack && (
+      {currentTrack && (
         <div className='audio-player'>
           <div className='player-info'>
             <h4>{currentTrack.name}</h4>
@@ -574,7 +700,7 @@ const Play = () => {
         </div>
       )}
 
-      {!showPlaylists && !currentTrack && (
+      {!currentTrack && (
         <div className='fixed-action-bar'>
           <div className='no-track-selected'>
             Select a track to play/download

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaSearch } from 'react-icons/fa';
 import oldMelodiesImg from '../Images/playlistbg/oldmelodies.png';
 import romanticImg from '../Images/playlistbg/romantic.png';
 import partyImg from '../Images/playlistbg/party.png';
@@ -14,6 +14,9 @@ const Playlists = ({
   favorites = new Set(),
   onToggleFavorite = () => {},
   showFavoritesOnly = false,
+  currentTrack = null,
+  onPlaylistClick = () => {},
+  selectedPlaylist = null,
 }) => {
   const playlists = [
     'Old Melodies',
@@ -23,7 +26,7 @@ const Playlists = ({
     'Workout Mix',
     'edm',
     'global',
-    'thar',
+    'Thar',
   ];
 
   // Map playlist names to their background images
@@ -35,7 +38,7 @@ const Playlists = ({
     'Workout Mix': gymImg,
     edm: edmImg,
     global: globalImg,
-    thar: tharImg,
+    Thar: tharImg,
   };
 
   // Filter playlists based on favorites first, then search query
@@ -76,15 +79,21 @@ const Playlists = ({
   });
 
   const handleMouseEnter = e => {
+    const playlistName = e.currentTarget.getAttribute('data-playlist');
+    const isSelected = selectedPlaylist === playlistName;
     e.currentTarget.style.transform = 'translateY(-5px)';
-    e.currentTarget.style.boxShadow =
-      '0 10px 20px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.1)';
+    e.currentTarget.style.boxShadow = isSelected
+      ? '0 10px 20px rgba(102, 126, 234, 0.5), 0 3px 6px rgba(0, 0, 0, 0.1)'
+      : '0 10px 20px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.1)';
   };
 
   const handleMouseLeave = e => {
+    const playlistName = e.currentTarget.getAttribute('data-playlist');
+    const isSelected = selectedPlaylist === playlistName;
     e.currentTarget.style.transform = 'translateY(0)';
-    e.currentTarget.style.boxShadow =
-      '0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)';
+    e.currentTarget.style.boxShadow = isSelected
+      ? '0 10px 20px rgba(102, 126, 234, 0.4), 0 3px 6px rgba(0, 0, 0, 0.1)'
+      : '0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)';
   };
 
   return (
@@ -92,13 +101,13 @@ const Playlists = ({
       <style>
         {`
           .playlists-container {
-            margin-top: 20px;
           }
           
           .playlists-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
+            ${currentTrack ? 'padding-bottom: 148px !important;' : 'padding-bottom: 48px !important;'}
           }
           
           @media (min-width: 768px) {
@@ -129,7 +138,11 @@ const Playlists = ({
               }}
             >
               <div style={{ fontSize: '3rem', marginBottom: '20px' }}>
-                {showFavoritesOnly ? '❤️' : '🔍'}
+                {showFavoritesOnly ? (
+                  <FaHeart style={{ fontSize: '3rem', color: '#e74c3c' }} />
+                ) : (
+                  <FaSearch style={{ fontSize: '3rem', color: '#667eea' }} />
+                )}
               </div>
               <h2 style={{ color: 'white', marginBottom: '10px' }}>
                 {showFavoritesOnly
@@ -147,9 +160,21 @@ const Playlists = ({
               {filteredPlaylists.map((playlist, index) => (
                 <div
                   key={index}
-                  style={getCardStyle(playlist)}
+                  data-playlist={playlist}
+                  style={{
+                    ...getCardStyle(playlist),
+                    border:
+                      selectedPlaylist === playlist
+                        ? '3px solid #667eea'
+                        : 'none',
+                    boxShadow:
+                      selectedPlaylist === playlist
+                        ? '0 10px 20px rgba(102, 126, 234, 0.4), 0 3px 6px rgba(0, 0, 0, 0.1)'
+                        : '0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)',
+                  }}
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
+                  onClick={() => onPlaylistClick(playlist)}
                 >
                   {/* Dark overlay for better text readability */}
                   <div
