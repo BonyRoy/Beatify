@@ -286,7 +286,7 @@ const Artists = ({ searchQuery = '', onArtistClick, selectedArtist }) => {
     <>
       <div
         style={{
-          padding: '10px 0px',
+          paddingBottom: '10px',
           display: 'flex',
           flexDirection: 'row',
           overflowX: 'auto',
@@ -303,7 +303,7 @@ const Artists = ({ searchQuery = '', onArtistClick, selectedArtist }) => {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '15px',
+                // gap: '15px',
                 flex: 1,
                 minWidth: '120px',
                 cursor: 'pointer',
@@ -314,8 +314,8 @@ const Artists = ({ searchQuery = '', onArtistClick, selectedArtist }) => {
             >
               <img
                 style={{
-                  width: '80px',
-                  height: '80px',
+                  width: '60px',
+                  height: '60px',
                   objectFit: 'cover',
                   borderRadius: '50%',
                   border: isSelected

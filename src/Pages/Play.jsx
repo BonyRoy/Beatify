@@ -12,11 +12,11 @@ import {
   FaSearch,
 } from 'react-icons/fa';
 import dance from '../Images/dance.gif';
-// import dance2 from '../Images/dance2.gif';
-// import dance3 from '../Images/dance3.gif';
-// import dance4 from '../Images/dance4.gif';
-// import dance5 from '../Images/dance5.gif';
-// import dance6 from '../Images/dance6.gif';
+import dance2 from '../Images/dance2.gif';
+import dance3 from '../Images/dance3.gif';
+import dance4 from '../Images/dance4.gif';
+import dance5 from '../Images/dance5.gif';
+import dance6 from '../Images/dance6.gif';
 import './Play.css';
 import Artists from '../Components/Artists';
 import Playlists from '../Components/Playlists';
@@ -24,8 +24,8 @@ import PlaylistDetail from '../Components/PlaylistDetail';
 
 // Theme gradients array
 const THEMES = [
-  'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', // Pink-Red
   'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Purple-Violet
+  'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', // Pink-Red
   'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', // Green-Cyan
   'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', // Pink-Yellow
   'linear-gradient(135deg, #30cfd0 0%, #330867 100%)', // Cyan-Purple
@@ -83,8 +83,7 @@ const Play = () => {
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
 
   // Array of dance GIFs
-  const danceGifs = [dance];
-  // const danceGifs = [dance, dance2, dance3, dance4, dance5, dance6];
+  const danceGifs = [dance, dance2, dance3, dance4, dance5, dance6];
 
   // Shuffle the GIFs on each reload
   const [shuffledGifs, setShuffledGifs] = useState([]);
@@ -598,78 +597,56 @@ const Play = () => {
                     className={`track-card ${currentTrack?.id === track.id ? 'selected' : ''}`}
                     onClick={() => playTrack(track)}
                   >
-                    <div className='track-header'>
-                      <div>
-                        <h3 className='track-name'>{track.name}</h3>
-                        <p className='track-artist'>by {track.artist}</p>
-                      </div>
-                      <button
-                        className='favorite-button'
-                        onClick={e => toggleFavorite(track, e)}
-                        aria-label={
-                          favorites.has(track.uuid || track.id)
-                            ? 'Remove from favorites'
-                            : 'Add to favorites'
-                        }
-                      >
-                        {favorites.has(track.uuid || track.id) ? (
-                          <FaHeart className='heart-icon filled' />
-                        ) : (
-                          <FaRegHeart className='heart-icon outline' />
-                        )}
-                      </button>
-                    </div>
-                    <div className='track-grid-container'>
-                      <div className='track-details'>
-                        {/* <span className='track-genre'>{track.genre}</span> */}
-                        <div className='track-album-container'>
-                          <div className='track-album-wrapper'>
-                            <span className='track-album'>
-                              Movie/Album: {track.album}
-                            </span>
-                            <span className='track-album track-album-duplicate'>
-                              Movie/Album: {track.album}
-                            </span>
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            gap: '10px',
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: '0.6rem',
-                              color: 'rgba(255, 255, 255, 0.8)',
-                              textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
-                            }}
-                          >
-                            Released: {formatReleaseDate(track.releaseDate)}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: '0.6rem',
-                              color: 'rgba(255, 255, 255, 0.8)',
-                              textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
-                            }}
-                          >
-                            Size: {formatFileSize(track.fileSize)}
-                          </span>
-                        </div>
-                      </div>
+                    <div className='track-content-wrapper'>
                       <div className='track-image-container'>
                         <img
-                          style={{
-                            borderRadius: '31px',
-                            width: '60%',
-                            height: '62.6px',
-                            objectFit: 'cover',
-                          }}
                           src={getRandomDanceGif(index)}
                           alt='Dancing animation'
                         />
+                      </div>
+                      <div className='track-info-wrapper'>
+                        <div className='track-header'>
+                          <div className='track-title-section'>
+                            <h3 className='track-name'>{track.name}</h3>
+                            <div className='track-meta-info'>
+                              <span className='track-meta-item'>
+                                Released on:{' '}
+                                {formatReleaseDate(track.releaseDate)}
+                              </span>
+                            </div>
+                            <div className='track-artist-album-container'>
+                              <div className='track-artist-album-wrapper'>
+                                <span className='track-artist-album'>
+                                  {track.artist} - {track.album}
+                                </span>
+                                <span className='track-artist-album track-artist-album-duplicate'>
+                                  {track.artist} - {track.album}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            className='favorite-button'
+                            onClick={e => toggleFavorite(track, e)}
+                            aria-label={
+                              favorites.has(track.uuid || track.id)
+                                ? 'Remove from favorites'
+                                : 'Add to favorites'
+                            }
+                          >
+                            {favorites.has(track.uuid || track.id) ? (
+                              <FaHeart className='heart-icon filled' />
+                            ) : (
+                              <FaRegHeart className='heart-icon outline' />
+                            )}
+                          </button>
+                        </div>
+                        <div className='track-meta-info'>
+                          <span className='track-meta-separator'>Size:</span>
+                          <span className='track-meta-item'>
+                            {formatFileSize(track.fileSize)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
