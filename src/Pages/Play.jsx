@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 // import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase/config';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
@@ -63,6 +63,9 @@ const playlistTracks = {
   ],
 };
 
+// Array of dance GIFs (moved outside component to avoid recreation on each render)
+const danceGifs = [dance, dance2, dance3, dance4, dance5, dance6];
+
 const Play = () => {
   // const navigate = useNavigate();
   const [musicList, setMusicList] = useState([]);
@@ -81,9 +84,9 @@ const Play = () => {
   const [showPlaylists, setShowPlaylists] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(0);
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
-
-  // Array of dance GIFs
-  const danceGifs = [dance, dance2, dance3, dance4, dance5, dance6];
+  const shouldAutoResumeRef = useRef(false); // Track if we should auto-resume after interruption
+  const [displayedTracksCount, setDisplayedTracksCount] = useState(10); // Lazy loading: start with 10 tracks
+  const scrollableContentRef = useRef(null); // Ref for scrollable content container
 
   // Shuffle the GIFs on each reload
   const [shuffledGifs, setShuffledGifs] = useState([]);
@@ -221,6 +224,8 @@ const Play = () => {
     }
 
     setFilteredMusicList(filtered);
+    // Reset displayed tracks count when filters change
+    setDisplayedTracksCount(10);
   }, [searchQuery, musicList, showFavoritesOnly, favorites, selectedArtist]);
 
   const playTrack = track => {
@@ -236,7 +241,7 @@ const Play = () => {
     }
   }, [currentTrack, isPlaying]);
 
-  const playNextTrack = () => {
+  const playNextTrack = useCallback(() => {
     if (!currentTrack || filteredMusicList.length === 0) return;
 
     // Find current track index in filteredMusicList
@@ -253,7 +258,228 @@ const Play = () => {
     // Play next track
     setCurrentTrack(nextTrack);
     setIsPlaying(true);
-  };
+  }, [currentTrack, filteredMusicList]);
+
+  // Media Session API for notification center player
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) {
+      // Media Session API not supported
+      return;
+    }
+
+    const audio = audioRef.current;
+    if (!audio || !currentTrack) {
+      // Clear media session when no track
+      navigator.mediaSession.metadata = null;
+      return;
+    }
+
+    // Set media metadata
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentTrack.name || 'Unknown Track',
+      artist: currentTrack.artist || 'Unknown Artist',
+      album: currentTrack.album || 'Unknown Album',
+      artwork: [
+        // You can add album artwork URLs here if available
+        // For now, using a default or placeholder
+        {
+          src: currentTrack.artworkUrl || currentTrack.coverUrl || '',
+          sizes: '512x512',
+          type: 'image/png',
+        },
+      ],
+    });
+
+    // Handle play action from notification
+    navigator.mediaSession.setActionHandler('play', () => {
+      if (audio && audio.paused) {
+        audio.play().catch(error => {
+          console.error('Error playing audio from notification:', error);
+        });
+        setIsPlaying(true);
+      }
+    });
+
+    // Handle pause action from notification
+    navigator.mediaSession.setActionHandler('pause', () => {
+      if (audio && !audio.paused) {
+        audio.pause();
+        setIsPlaying(false);
+      }
+    });
+
+    // Handle next track action from notification
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      playNextTrack();
+    });
+
+    // Handle previous track action from notification
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      if (!currentTrack || filteredMusicList.length === 0) return;
+
+      const currentIndex = filteredMusicList.findIndex(
+        track => track.id === currentTrack.id
+      );
+
+      if (currentIndex === -1) return;
+
+      // Get previous track (loop to last if first)
+      const prevIndex =
+        currentIndex === 0 ? filteredMusicList.length - 1 : currentIndex - 1;
+      const prevTrack = filteredMusicList[prevIndex];
+
+      setCurrentTrack(prevTrack);
+      setIsPlaying(true);
+    });
+
+    // Update playback state
+    const updatePlaybackState = () => {
+      if (audio) {
+        navigator.mediaSession.playbackState = audio.paused
+          ? 'paused'
+          : 'playing';
+      }
+    };
+
+    // Listen to audio events to update playback state
+    audio.addEventListener('play', updatePlaybackState);
+    audio.addEventListener('pause', updatePlaybackState);
+
+    // Initial state
+    updatePlaybackState();
+
+    return () => {
+      audio.removeEventListener('play', updatePlaybackState);
+      audio.removeEventListener('pause', updatePlaybackState);
+    };
+  }, [currentTrack, isPlaying, filteredMusicList, playNextTrack]);
+
+  // Lazy loading: Load more tracks on scroll
+  useEffect(() => {
+    const scrollableElement = scrollableContentRef.current;
+    if (!scrollableElement) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollableElement;
+      // Load more when user is within 200px of the bottom
+      const threshold = 200;
+
+      if (scrollHeight - scrollTop - clientHeight < threshold) {
+        // Check if there are more tracks to load
+        if (displayedTracksCount < filteredMusicList.length) {
+          setDisplayedTracksCount(prev =>
+            Math.min(prev + 10, filteredMusicList.length)
+          );
+        }
+      }
+    };
+
+    scrollableElement.addEventListener('scroll', handleScroll);
+
+    return () => {
+      scrollableElement.removeEventListener('scroll', handleScroll);
+    };
+  }, [displayedTracksCount, filteredMusicList.length]);
+
+  // Handle audio interruptions (like phone calls)
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    let resumeTimeout = null;
+
+    const handlePause = () => {
+      // If audio was playing and gets paused, it might be due to system interruption
+      // Only set auto-resume if isPlaying is still true (user didn't manually pause)
+      if (isPlaying && currentTrack) {
+        shouldAutoResumeRef.current = true;
+      } else {
+        // User manually paused, don't auto-resume
+        shouldAutoResumeRef.current = false;
+      }
+      // Clear any pending resume attempts when paused
+      if (resumeTimeout) {
+        clearTimeout(resumeTimeout);
+        resumeTimeout = null;
+      }
+    };
+
+    const handlePlay = () => {
+      // If audio starts playing, clear the auto-resume flag
+      shouldAutoResumeRef.current = false;
+      setIsPlaying(true);
+      // Clear any pending resume attempts
+      if (resumeTimeout) {
+        clearTimeout(resumeTimeout);
+        resumeTimeout = null;
+      }
+    };
+
+    // Handle visibility change (when app comes back to foreground after call)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // App went to background (call might be starting), clear any resume attempts
+        if (resumeTimeout) {
+          clearTimeout(resumeTimeout);
+          resumeTimeout = null;
+        }
+        return;
+      }
+
+      // App came back to foreground - check if we should resume
+      if (
+        document.visibilityState === 'visible' &&
+        shouldAutoResumeRef.current &&
+        isPlaying &&
+        currentTrack
+      ) {
+        // Clear any existing timeout
+        if (resumeTimeout) {
+          clearTimeout(resumeTimeout);
+        }
+        // Wait 2 seconds to ensure call has fully ended before resuming
+        resumeTimeout = setTimeout(() => {
+          if (
+            audioRef.current &&
+            shouldAutoResumeRef.current &&
+            isPlaying &&
+            currentTrack &&
+            audioRef.current.paused &&
+            document.visibilityState === 'visible'
+          ) {
+            audioRef.current.play().catch(error => {
+              console.error('Error resuming audio after interruption:', error);
+              // If play fails, clear the flag to prevent retry loops
+              shouldAutoResumeRef.current = false;
+            });
+          }
+          resumeTimeout = null;
+        }, 2000);
+      }
+    };
+
+    // Handle when audio is suspended by system (e.g., during call)
+    const handleSuspend = () => {
+      if (isPlaying && currentTrack) {
+        shouldAutoResumeRef.current = true;
+      }
+    };
+
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('suspend', handleSuspend);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('suspend', handleSuspend);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (resumeTimeout) {
+        clearTimeout(resumeTimeout);
+      }
+    };
+  }, [isPlaying, currentTrack]);
 
   // const downloadTrack = track => {
   //   window.open(track.fileUrl, '_blank');
@@ -554,7 +780,7 @@ const Play = () => {
             </div>
           )}
 
-          <div className='scrollable-content'>
+          <div className='scrollable-content' ref={scrollableContentRef}>
             {musicList.length === 0 ? (
               <div className='empty-state'>
                 <div className='empty-icon'>
@@ -591,66 +817,68 @@ const Play = () => {
                   paddingBottom: currentTrack ? '68px' : '0px',
                 }}
               >
-                {filteredMusicList.map((track, index) => (
-                  <div
-                    key={track.id}
-                    className={`track-card ${currentTrack?.id === track.id ? 'selected' : ''}`}
-                    onClick={() => playTrack(track)}
-                  >
-                    <div className='track-content-wrapper'>
-                      <div className='track-image-container'>
-                        <img
-                          src={getRandomDanceGif(index)}
-                          alt='Dancing animation'
-                        />
-                      </div>
-                      <div className='track-info-wrapper'>
-                        <div className='track-header'>
-                          <div className='track-title-section'>
-                            <h3 className='track-name'>{track.name}</h3>
-                            <div className='track-meta-info'>
-                              <span className='track-meta-item'>
-                                Released on:{' '}
-                                {formatReleaseDate(track.releaseDate)}
-                              </span>
-                            </div>
-                            <div className='track-artist-album-container'>
-                              <div className='track-artist-album-wrapper'>
-                                <span className='track-artist-album'>
-                                  {track.artist} - {track.album}
-                                </span>
-                                <span className='track-artist-album track-artist-album-duplicate'>
-                                  {track.artist} - {track.album}
+                {filteredMusicList
+                  .slice(0, displayedTracksCount)
+                  .map((track, index) => (
+                    <div
+                      key={track.id}
+                      className={`track-card ${currentTrack?.id === track.id ? 'selected' : ''}`}
+                      onClick={() => playTrack(track)}
+                    >
+                      <div className='track-content-wrapper'>
+                        <div className='track-image-container'>
+                          <img
+                            src={getRandomDanceGif(index)}
+                            alt='Dancing animation'
+                          />
+                        </div>
+                        <div className='track-info-wrapper'>
+                          <div className='track-header'>
+                            <div className='track-title-section'>
+                              <h3 className='track-name'>{track.name}</h3>
+                              <div className='track-meta-info'>
+                                <span className='track-meta-item'>
+                                  Released on:{' '}
+                                  {formatReleaseDate(track.releaseDate)}
                                 </span>
                               </div>
+                              <div className='track-artist-album-container'>
+                                <div className='track-artist-album-wrapper'>
+                                  <span className='track-artist-album'>
+                                    {track.artist} - {track.album}
+                                  </span>
+                                  <span className='track-artist-album track-artist-album-duplicate'>
+                                    {track.artist} - {track.album}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
+                            <button
+                              className='favorite-button'
+                              onClick={e => toggleFavorite(track, e)}
+                              aria-label={
+                                favorites.has(track.uuid || track.id)
+                                  ? 'Remove from favorites'
+                                  : 'Add to favorites'
+                              }
+                            >
+                              {favorites.has(track.uuid || track.id) ? (
+                                <FaHeart className='heart-icon filled' />
+                              ) : (
+                                <FaRegHeart className='heart-icon outline' />
+                              )}
+                            </button>
                           </div>
-                          <button
-                            className='favorite-button'
-                            onClick={e => toggleFavorite(track, e)}
-                            aria-label={
-                              favorites.has(track.uuid || track.id)
-                                ? 'Remove from favorites'
-                                : 'Add to favorites'
-                            }
-                          >
-                            {favorites.has(track.uuid || track.id) ? (
-                              <FaHeart className='heart-icon filled' />
-                            ) : (
-                              <FaRegHeart className='heart-icon outline' />
-                            )}
-                          </button>
-                        </div>
-                        <div className='track-meta-info'>
-                          <span className='track-meta-separator'>Size:</span>
-                          <span className='track-meta-item'>
-                            {formatFileSize(track.fileSize)}
-                          </span>
+                          <div className='track-meta-info'>
+                            <span className='track-meta-separator'>Size:</span>
+                            <span className='track-meta-item'>
+                              {formatFileSize(track.fileSize)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </div>
