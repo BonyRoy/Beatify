@@ -10,6 +10,11 @@ import {
   FaList,
   FaHeadphones,
   FaSearch,
+  FaStepForward,
+  FaStepBackward,
+  FaPlay,
+  FaPause,
+  FaTimes,
 } from 'react-icons/fa';
 import dance from '../Images/dance.gif';
 import dance2 from '../Images/dance2.gif';
@@ -73,6 +78,8 @@ const Play = () => {
   const [loading, setLoading] = useState(true);
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState(new Set());
   const [playlistFavorites, setPlaylistFavorites] = useState(new Set());
@@ -87,6 +94,10 @@ const Play = () => {
   const shouldAutoResumeRef = useRef(false); // Track if we should auto-resume after interruption
   const [displayedTracksCount, setDisplayedTracksCount] = useState(10); // Lazy loading: start with 10 tracks
   const scrollableContentRef = useRef(null); // Ref for scrollable content container
+  const [isDragging, setIsDragging] = useState(false); // Track if user is dragging progress bar
+  const progressBarRef = useRef(null); // Ref for progress bar element
+  const wasDraggingRef = useRef(false); // Track if user was dragging to prevent click after drag
+  const [showThemeModal, setShowThemeModal] = useState(false); // Track theme modal visibility
 
   // Shuffle the GIFs on each reload
   const [shuffledGifs, setShuffledGifs] = useState([]);
@@ -231,6 +242,7 @@ const Play = () => {
   const playTrack = track => {
     setCurrentTrack(track);
     setIsPlaying(true);
+    setCurrentTime(0);
   };
 
   useEffect(() => {
@@ -258,6 +270,28 @@ const Play = () => {
     // Play next track
     setCurrentTrack(nextTrack);
     setIsPlaying(true);
+    setCurrentTime(0);
+  }, [currentTrack, filteredMusicList]);
+
+  const playPreviousTrack = useCallback(() => {
+    if (!currentTrack || filteredMusicList.length === 0) return;
+
+    // Find current track index in filteredMusicList
+    const currentIndex = filteredMusicList.findIndex(
+      track => track.id === currentTrack.id
+    );
+
+    if (currentIndex === -1) return;
+
+    // Get previous track (loop to last if first)
+    const prevIndex =
+      currentIndex === 0 ? filteredMusicList.length - 1 : currentIndex - 1;
+    const prevTrack = filteredMusicList[prevIndex];
+
+    // Play previous track
+    setCurrentTrack(prevTrack);
+    setIsPlaying(true);
+    setCurrentTime(0);
   }, [currentTrack, filteredMusicList]);
 
   // Media Session API for notification center player
@@ -315,21 +349,7 @@ const Play = () => {
 
     // Handle previous track action from notification
     navigator.mediaSession.setActionHandler('previoustrack', () => {
-      if (!currentTrack || filteredMusicList.length === 0) return;
-
-      const currentIndex = filteredMusicList.findIndex(
-        track => track.id === currentTrack.id
-      );
-
-      if (currentIndex === -1) return;
-
-      // Get previous track (loop to last if first)
-      const prevIndex =
-        currentIndex === 0 ? filteredMusicList.length - 1 : currentIndex - 1;
-      const prevTrack = filteredMusicList[prevIndex];
-
-      setCurrentTrack(prevTrack);
-      setIsPlaying(true);
+      playPreviousTrack();
     });
 
     // Update playback state
@@ -352,7 +372,13 @@ const Play = () => {
       audio.removeEventListener('play', updatePlaybackState);
       audio.removeEventListener('pause', updatePlaybackState);
     };
-  }, [currentTrack, isPlaying, filteredMusicList, playNextTrack]);
+  }, [
+    currentTrack,
+    isPlaying,
+    filteredMusicList,
+    playNextTrack,
+    playPreviousTrack,
+  ]);
 
   // Lazy loading: Load more tracks on scroll
   useEffect(() => {
@@ -530,12 +556,17 @@ const Play = () => {
     });
   };
 
-  const shuffleTheme = () => {
-    setCurrentTheme(prevTheme => {
-      const nextTheme = (prevTheme + 1) % THEMES.length;
-      localStorage.setItem('beatifyTheme', nextTheme.toString());
-      return nextTheme;
-    });
+  const openThemeModal = () => {
+    setShowThemeModal(true);
+  };
+
+  const closeThemeModal = () => {
+    setShowThemeModal(false);
+  };
+
+  const selectTheme = themeIndex => {
+    setCurrentTheme(themeIndex);
+    localStorage.setItem('beatifyTheme', themeIndex.toString());
   };
 
   // const formatDate = timestamp => {
@@ -565,6 +596,109 @@ const Play = () => {
     const mb = bytes / (1024 * 1024);
     return `${mb.toFixed(1)} MB`;
   };
+
+  const formatTime = seconds => {
+    if (isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const updateProgress = useCallback(
+    clientX => {
+      if (!audioRef.current || !duration || !progressBarRef.current) return;
+      const rect = progressBarRef.current.getBoundingClientRect();
+      const clickX = clientX - rect.left;
+      const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+      const newTime = percentage * duration;
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+    },
+    [duration]
+  );
+
+  const handleSeek = e => {
+    // Prevent click if user was just dragging
+    if (wasDraggingRef.current) {
+      wasDraggingRef.current = false;
+      return;
+    }
+    if (!audioRef.current || !duration) return;
+    updateProgress(e.clientX);
+  };
+
+  const handleMouseDown = e => {
+    e.preventDefault();
+    wasDraggingRef.current = false;
+    setIsDragging(true);
+    updateProgress(e.clientX);
+  };
+
+  const handleMouseMove = useCallback(
+    e => {
+      if (isDragging) {
+        wasDraggingRef.current = true;
+        updateProgress(e.clientX);
+      }
+    },
+    [isDragging, updateProgress]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    // Small delay to allow click event to check wasDraggingRef
+    setTimeout(() => {
+      setIsDragging(false);
+    }, 0);
+  }, []);
+
+  const handleTouchStart = e => {
+    e.preventDefault();
+    wasDraggingRef.current = false;
+    setIsDragging(true);
+    const touch = e.touches[0];
+    updateProgress(touch.clientX);
+  };
+
+  const handleTouchMove = useCallback(
+    e => {
+      if (isDragging) {
+        wasDraggingRef.current = true;
+        const touch = e.touches[0];
+        updateProgress(touch.clientX);
+      }
+    },
+    [isDragging, updateProgress]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    // Small delay to allow any click events to check wasDraggingRef
+    setTimeout(() => {
+      setIsDragging(false);
+    }, 0);
+  }, []);
+
+  // Add global mouse/touch event listeners for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove);
+      document.addEventListener('touchend', handleTouchEnd);
+
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+      };
+    }
+  }, [
+    isDragging,
+    handleMouseMove,
+    handleMouseUp,
+    handleTouchMove,
+    handleTouchEnd,
+  ]);
 
   if (loading) {
     return (
@@ -673,7 +807,7 @@ const Play = () => {
             </button>
             <button
               className='menu-item'
-              onClick={shuffleTheme}
+              onClick={openThemeModal}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -887,18 +1021,104 @@ const Play = () => {
 
       {currentTrack && (
         <div className='audio-player'>
-          <div className='player-info'>
-            <h4>{currentTrack.name}</h4>
-            <p>
-              {currentTrack.artist} - {currentTrack.album}
-            </p>
+          <div className='player-content'>
+            <div className='player-info'>
+              <h4>{currentTrack.name}</h4>
+              <p>
+                {currentTrack.artist} - {currentTrack.album}
+              </p>
+            </div>
+            <div className='player-controls'>
+              <button
+                className='control-button prev-button'
+                onClick={playPreviousTrack}
+                aria-label='Previous track'
+              >
+                <FaStepBackward />
+              </button>
+              <button
+                className='control-button play-pause-button'
+                onClick={() => {
+                  if (audioRef.current) {
+                    if (isPlaying) {
+                      audioRef.current.pause();
+                      setIsPlaying(false);
+                    } else {
+                      audioRef.current.play();
+                      setIsPlaying(true);
+                    }
+                  }
+                }}
+                aria-label={isPlaying ? 'Pause' : 'Play'}
+              >
+                {isPlaying ? <FaPause /> : <FaPlay />}
+              </button>
+              <button
+                className='control-button next-button'
+                onClick={playNextTrack}
+                aria-label='Next track'
+              >
+                <FaStepForward />
+              </button>
+            </div>
+            <div className='progress-container'>
+              <span className='time-display'>{formatTime(currentTime)}</span>
+              <div
+                ref={progressBarRef}
+                className='progress-bar'
+                onClick={handleSeek}
+                onMouseDown={handleMouseDown}
+                onTouchStart={handleTouchStart}
+                role='slider'
+                tabIndex={0}
+                aria-label='Progress bar'
+                aria-valuemin={0}
+                aria-valuemax={duration}
+                aria-valuenow={currentTime}
+              >
+                <div
+                  className='progress-filled'
+                  style={{
+                    height: '100%',
+                    width: duration
+                      ? `${(currentTime / duration) * 100}%`
+                      : '0%',
+                  }}
+                />
+                <div
+                  className='progress-handle'
+                  style={{
+                    left: duration
+                      ? `${(currentTime / duration) * 100}%`
+                      : '0%',
+                  }}
+                />
+              </div>
+              <span className='time-display'>{formatTime(duration)}</span>
+            </div>
           </div>
           <audio
             ref={audioRef}
-            controls
             autoPlay={isPlaying}
             src={currentTrack.fileUrl}
             onEnded={playNextTrack}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onTimeUpdate={() => {
+              if (audioRef.current && !isDragging) {
+                setCurrentTime(audioRef.current.currentTime);
+              }
+            }}
+            onLoadedMetadata={() => {
+              if (audioRef.current) {
+                setDuration(audioRef.current.duration);
+              }
+            }}
+            onLoadedData={() => {
+              if (audioRef.current) {
+                setDuration(audioRef.current.duration);
+              }
+            }}
           >
             Your browser does not support the audio element.
           </audio>
@@ -909,6 +1129,41 @@ const Play = () => {
         <div className='fixed-action-bar'>
           <div className='no-track-selected'>
             Select a track to play/download
+          </div>
+        </div>
+      )}
+
+      {/* Theme Selection Modal */}
+      {showThemeModal && (
+        <div className='theme-modal-overlay' onClick={closeThemeModal}>
+          <div className='theme-modal' onClick={e => e.stopPropagation()}>
+            <div className='theme-modal-header'>
+              {/* <h2>Select Theme</h2> */}
+              <button
+                className='theme-modal-close'
+                onClick={closeThemeModal}
+                aria-label='Close theme modal'
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div className='theme-options-grid'>
+              {THEMES.map((theme, index) => (
+                <button
+                  key={index}
+                  className={`theme-option ${currentTheme === index ? 'active' : ''}`}
+                  onClick={() => selectTheme(index)}
+                  style={{ background: theme }}
+                  aria-label={`Select theme ${index + 1}`}
+                >
+                  {currentTheme === index && (
+                    <div className='theme-checkmark'>
+                      <FaMusic />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
