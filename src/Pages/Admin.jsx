@@ -56,6 +56,13 @@ const Admin = () => {
   const [editingTrackId, setEditingTrackId] = useState(null);
   const [artistDropdownOpen, setArtistDropdownOpen] = useState(false);
   const [genreDropdownOpen, setGenreDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  // Admin password - change this to your desired password
+  const ADMIN_PASSWORD = '8369877891';
 
   // Predefined lists for dropdowns
   const genres = [
@@ -132,8 +139,19 @@ const Admin = () => {
   ];
 
   useEffect(() => {
-    fetchExistingTracks();
+    // Check if user was previously authenticated (stored in sessionStorage)
+    const authStatus = sessionStorage.getItem('adminAuthenticated');
+    if (authStatus === 'true') {
+      setIsAuthenticated(true);
+      fetchExistingTracks();
+    }
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchExistingTracks();
+    }
+  }, [isAuthenticated]);
 
   const fetchExistingTracks = async () => {
     try {
@@ -199,7 +217,7 @@ const Admin = () => {
 
   // Custom Dropdown Component
   const CustomDropdown = ({
-    id,
+    // id,
     value,
     options,
     onChange,
@@ -511,11 +529,63 @@ const Admin = () => {
     }
   };
 
+  const handlePasswordSubmit = e => {
+    e.preventDefault();
+    if (passwordInput === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      setPasswordError('');
+      setPasswordInput('');
+      sessionStorage.setItem('adminAuthenticated', 'true');
+    } else {
+      setPasswordError('Incorrect password. Please try again.');
+      setPasswordInput('');
+    }
+  };
+
+  // Password Modal
+  if (!isAuthenticated) {
+    return (
+      <div className='admin-container'>
+        <div className='password-modal-overlay'>
+          <div className='password-modal'>
+            <div className='password-modal-header'>
+              <h2>🔒 Admin Access Required</h2>
+              <p>Please enter the password to access the admin panel</p>
+            </div>
+            <form onSubmit={handlePasswordSubmit} className='password-form'>
+              <div className='password-input-group'>
+                <input
+                  type='password'
+                  value={passwordInput}
+                  onChange={e => {
+                    setPasswordInput(e.target.value);
+                    setPasswordError('');
+                  }}
+                  placeholder='Enter password'
+                  className='password-input'
+                  autoFocus
+                />
+                {passwordError && (
+                  <div className='password-error'>{passwordError}</div>
+                )}
+              </div>
+              <button type='submit' className='password-submit-btn'>
+                Access Admin Panel
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className='admin-container'>
       <div className='admin-header'>
-        <h1>🎵 Music Upload Admin Panel</h1>
-        <p>Upload new music tracks to your library</p>
+        <h1 style={{ color: 'black' }}>🎵 Music Upload Admin Panel</h1>
+        <p style={{ color: 'black' }}>
+          Upload new music tracks to your library
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className='upload-form'>
@@ -714,43 +784,96 @@ const Admin = () => {
         <h2>📋 Existing Tracks</h2>
         {loadingTracks ? (
           <div className='loading-tracks'>Loading tracks...</div>
-        ) : existingTracks.length === 0 ? (
-          <div className='no-tracks'>No tracks uploaded yet.</div>
         ) : (
-          <div className='tracks-list'>
-            {existingTracks.map(track => (
-              <div key={track.id} className='track-item'>
-                <div className='track-item-info'>
-                  <h3>{track.name}</h3>
-                  <p>
-                    <strong>Artist:</strong> {track.artist} |{' '}
-                    <strong>Genre:</strong> {track.genre} |{' '}
-                    <strong>Album:</strong> {track.album}
-                  </p>
-                  <p>
-                    <strong>Release Date:</strong> {track.releaseDate} |{' '}
-                    <strong>UUID:</strong> {track.uuid || 'N/A'}
-                  </p>
-                </div>
-                <div className='track-item-actions'>
-                  <button
-                    className='edit-button'
-                    onClick={() => handleEdit(track)}
-                    disabled={uploading}
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    className='delete-button'
-                    onClick={() => handleDelete(track.id)}
-                    disabled={uploading}
-                  >
-                    🗑️ Delete
-                  </button>
+          <>
+            <div className='tracks-count-container'>
+              <span className='tracks-count'>
+                Total: <strong>{existingTracks.length}</strong>
+                {searchQuery.trim() && (
+                  <>
+                    {' | '}
+                    Showing:{' '}
+                    <strong>
+                      {
+                        existingTracks.filter(track => {
+                          if (!searchQuery.trim()) return true;
+                          const query = searchQuery.toLowerCase();
+                          return (
+                            track.name?.toLowerCase().includes(query) ||
+                            track.artist?.toLowerCase().includes(query) ||
+                            track.genre?.toLowerCase().includes(query) ||
+                            track.album?.toLowerCase().includes(query) ||
+                            track.uuid?.toLowerCase().includes(query)
+                          );
+                        }).length
+                      }
+                    </strong>
+                  </>
+                )}
+              </span>
+            </div>
+            <div className='search-container'>
+              <input
+                type='text'
+                placeholder='🔍 Search tracks by name, artist, genre, album...'
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className='search-input'
+              />
+            </div>
+            {existingTracks.length === 0 ? (
+              <div className='no-tracks'>No tracks uploaded yet.</div>
+            ) : (
+              <div className='tracks-list-container'>
+                <div className='tracks-list'>
+                  {existingTracks
+                    .filter(track => {
+                      if (!searchQuery.trim()) return true;
+                      const query = searchQuery.toLowerCase();
+                      return (
+                        track.name?.toLowerCase().includes(query) ||
+                        track.artist?.toLowerCase().includes(query) ||
+                        track.genre?.toLowerCase().includes(query) ||
+                        track.album?.toLowerCase().includes(query) ||
+                        track.uuid?.toLowerCase().includes(query)
+                      );
+                    })
+                    .map(track => (
+                      <div key={track.id} className='track-item'>
+                        <div className='track-item-info'>
+                          <h3>{track.name}</h3>
+                          <p>
+                            <strong>Artist:</strong> {track.artist} |{' '}
+                            <strong>Genre:</strong> {track.genre} |{' '}
+                            <strong>Album:</strong> {track.album}
+                          </p>
+                          <p>
+                            <strong>Release Date:</strong> {track.releaseDate} |{' '}
+                            <strong>UUID:</strong> {track.uuid || 'N/A'}
+                          </p>
+                        </div>
+                        <div className='track-item-actions'>
+                          <button
+                            className='edit-button'
+                            onClick={() => handleEdit(track)}
+                            disabled={uploading}
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button
+                            className='delete-button'
+                            onClick={() => handleDelete(track.id)}
+                            disabled={uploading}
+                          >
+                            🗑️ Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                 </div>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>

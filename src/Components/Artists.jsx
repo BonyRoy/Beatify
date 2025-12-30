@@ -34,6 +34,8 @@ import HarshitSaxena from '../Images/Harshit Saxena .jpeg';
 import AlkaYagnik from '../Images/Alka Yagnik.jpg';
 import UditNarayan from '../Images/Udit Narayan.jpeg';
 import KumarSanu from '../Images/Kumar Sanu.jpeg';
+import KailashKher from '../Images/Kailash Kher.jpg';
+import KishoreKumar from '../Images/Kishore Kumar.webp';
 
 const Artists = ({ searchQuery = '', onArtistClick, selectedArtist }) => {
   const allArtists = [
@@ -213,6 +215,16 @@ const Artists = ({ searchQuery = '', onArtistClick, selectedArtist }) => {
       name: 'Kumar Sanu',
       image: KumarSanu,
     },
+    {
+      id: 36,
+      name: 'Kailash Kher',
+      image: KailashKher,
+    },
+    {
+      id: 37,
+      name: 'Kishore Kumar',
+      image: KishoreKumar,
+    },
   ];
 
   const [artists, setArtists] = useState(allArtists);
@@ -250,7 +262,7 @@ const Artists = ({ searchQuery = '', onArtistClick, selectedArtist }) => {
       // Combine: clicked artists first, then others
       setArtists([...clicked, ...notClicked]);
     }
-  }, []);
+  }, [selectedArtist]);
 
   // Handle artist click - save to localStorage only (reordering happens on reload)
   const handleArtistClick = artistName => {
@@ -276,11 +288,25 @@ const Artists = ({ searchQuery = '', onArtistClick, selectedArtist }) => {
   };
 
   // Filter artists based on search query
-  const filteredArtists = searchQuery.trim()
+  let filteredArtists = searchQuery.trim()
     ? artists.filter(artist =>
         artist.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : artists;
+
+  // If an artist filter is on, bring that artist to the first position
+  if (selectedArtist) {
+    const selectedIndex = filteredArtists.findIndex(
+      artist => artist.name === selectedArtist
+    );
+    if (selectedIndex > 0) {
+      const selectedArtistObj = filteredArtists[selectedIndex];
+      filteredArtists = [
+        selectedArtistObj,
+        ...filteredArtists.filter(artist => artist.name !== selectedArtist),
+      ];
+    }
+  }
 
   return (
     <>

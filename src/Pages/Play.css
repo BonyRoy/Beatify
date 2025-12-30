@@ -255,6 +255,11 @@
   gap: 25px;
   padding-bottom: 20px;
   margin-bottom: 120px;
+  transition: margin-bottom 0.3s ease;
+}
+
+.music-grid.has-equalizer {
+  margin-bottom: 280px;
 }
 
 .track-card {
@@ -555,6 +560,12 @@
     0 8px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
   z-index: 1000;
+  transition: bottom 0.3s ease, padding-bottom 0.3s ease;
+}
+
+.audio-player.has-equalizer {
+  bottom: 20px;
+  padding-bottom: 16px;
 }
 
 .player-content {
@@ -620,6 +631,22 @@
   text-align: center;
   margin-bottom: 0;
   width: 100%;
+  position: relative;
+}
+
+.player-info-buttons {
+  position: absolute;
+  top: -8px;
+  right: -12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+}
+
+.player-info-text {
+  text-align: center;
+  width: 100%;
 }
 
 .player-info h4 {
@@ -640,6 +667,68 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.equalizer-toggle-button {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.equalizer-toggle-button:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.equalizer-toggle-button:active {
+  transform: scale(0.95);
+}
+
+.equalizer-toggle-button.active {
+  background: rgba(102, 126, 234, 0.4);
+  border-color: rgba(102, 126, 234, 0.6);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+.download-track-button {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.download-track-button:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.download-track-button:active {
+  transform: scale(0.95);
 }
 
 .audio-player audio {
@@ -698,6 +787,36 @@
   background: rgba(255, 255, 255, 0.4);
   transform: scale(1.15);
 }
+
+.speed-button-top {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.speed-button-top:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.speed-button-top:active {
+  transform: scale(0.95);
+}
+
 
 .progress-container {
   display: flex;
@@ -790,6 +909,10 @@
     margin-bottom: 100px;
   }
 
+  .audio-player.has-equalizer {
+    bottom: 10px;
+  }
+
   .search-input {
     padding: 12px 15px;
     font-size: 0.95rem;
@@ -875,12 +998,34 @@
   }
 
 
+  .player-info-text {
+    text-align: center;
+  }
+
   .player-info h4 {
     font-size: 1rem;
   }
 
   .player-info p {
     font-size: 0.8rem;
+  }
+
+  .equalizer-toggle-button {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+
+  .download-track-button {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+
+  .speed-button-top {
+    width: 32px;
+    height: 32px;
+    font-size: 0.75rem;
   }
 
   .player-controls {
@@ -922,6 +1067,267 @@
   }
 }
 
+/* Equalizer Styles */
+.equalizer-container {
+  width: 100%;
+  margin-top: 12px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 300px;
+  }
+}
+
+.equalizer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.equalizer-header h5 {
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+}
+
+.equalizer-reset-button {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  padding: 8px 16px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.equalizer-reset-button:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.equalizer-reset-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.equalizer-bands {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  height: 140px;
+  padding: 10px 0;
+}
+
+.equalizer-band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  height: 100%;
+}
+
+.equalizer-slider {
+  width: 100%;
+  height: 120px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  writing-mode: bt-lr; /* IE */
+  -webkit-appearance: slider-vertical; /* WebKit */
+  writing-mode: vertical-lr;
+  direction: rtl;
+  outline: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+.equalizer-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all 0.2s ease;
+  margin-left: -4.8px;
+}
+
+.equalizer-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+.equalizer-slider::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+}
+
+.equalizer-slider::-webkit-slider-runnable-track {
+  width: 6px;
+  height: 120px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.4) 100%
+  );
+  border-radius: 3px;
+  position: relative;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(255, 255, 255, 0.3);
+  margin: 0 auto;
+}
+
+.equalizer-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all 0.2s ease;
+  margin-left: -6px;
+}
+
+.equalizer-slider::-moz-range-thumb:hover {
+  transform: scale(1.25);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+.equalizer-slider::-moz-range-thumb:active {
+  transform: scale(1.15);
+}
+
+.equalizer-slider::-moz-range-track {
+  width: 6px;
+  height: 120px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.4) 100%
+  );
+  border-radius: 3px;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(255, 255, 255, 0.3);
+  margin: 0 auto;
+}
+
+.equalizer-label {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive Design for Equalizer */
+@media (max-width: 768px) {
+  .equalizer-container {
+    padding: 12px;
+    margin-top: 10px;
+  }
+
+  .equalizer-bands {
+    gap: 6px;
+    height: 100px;
+  }
+
+  .equalizer-slider {
+    height: 80px;
+  }
+
+  .equalizer-label {
+    font-size: 0.65rem;
+  }
+
+  .equalizer-value {
+    font-size: 0.6rem;
+  }
+
+  .equalizer-header h5 {
+    font-size: 0.85rem;
+  }
+
+  .equalizer-reset-button {
+    padding: 5px 10px;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .equalizer-bands {
+    gap: 4px;
+    height: 90px;
+  }
+
+  .equalizer-slider {
+    height: 70px;
+  }
+
+  .equalizer-label {
+    font-size: 0.6rem;
+  }
+
+  .equalizer-value {
+    font-size: 0.55rem;
+  }
+}
+
 @media (max-width: 480px) {
   .empty-state {
     padding: 40px 20px;
@@ -943,6 +1349,118 @@
   .track-image-container {
     width: 60px;
     height: 60px;
+  }
+}
+
+/* Download Modal */
+.download-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+}
+
+.download-modal {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  position: relative;
+  animation: slideUpModal 0.3s ease;
+}
+
+.download-modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.download-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.download-modal-close:active {
+  transform: scale(0.95) rotate(90deg);
+}
+
+.download-modal-button {
+  background: #000000;
+  border: none;
+  border-radius: 12px;
+  padding: 15px 30px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.download-modal-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.download-modal-button:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 768px) {
+  .download-modal {
+    padding: 20px;
+    max-width: 90%;
+    border-radius: 15px;
+  }
+
+  .download-modal-close {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+    top: 12px;
+    right: 12px;
+  }
+
+  .download-modal-button {
+    padding: 12px 24px;
+    font-size: 14px;
   }
 }
 

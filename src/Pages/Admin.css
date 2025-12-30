@@ -9,6 +9,125 @@
   width: 100%;
 }
 
+/* Password Modal Styles */
+.password-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.password-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 450px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.password-modal-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.password-modal-header h2 {
+  color: #333;
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.password-modal-header p {
+  color: #666;
+  font-size: 1rem;
+}
+
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.password-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.password-input {
+  width: 100%;
+  padding: 15px 20px;
+  border: 2px solid #e1e1e1;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  background: white;
+  color: #333;
+  box-sizing: border-box;
+}
+
+.password-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.password-input::placeholder {
+  color: #999;
+}
+
+.password-error {
+  color: #e74c3c;
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  background: #fee;
+  border-radius: 6px;
+  border-left: 3px solid #e74c3c;
+}
+
+.password-submit-btn {
+  width: 100%;
+  padding: 15px 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.password-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.password-submit-btn:active {
+  transform: translateY(0);
+}
+
 .admin-header {
   text-align: center;
   margin-bottom: 40px;
@@ -413,12 +532,84 @@
   border-bottom: 2px solid #f0f0f0;
 }
 
+.tracks-count-container {
+  margin-bottom: 15px;
+  padding: 12px 15px;
+  background: #f0f4ff;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.tracks-count {
+  color: #333;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.tracks-count strong {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.search-container {
+  margin-bottom: 20px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #e1e1e1;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+  color: #ffffff !important;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  color: #ffffff !important;
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
 .loading-tracks,
 .no-tracks {
   text-align: center;
   padding: 40px 20px;
   color: #666;
   font-size: 1.1rem;
+}
+
+.tracks-list-container {
+  height: 800px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 10px;
+  box-sizing: border-box;
+}
+
+.tracks-list-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tracks-list-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.tracks-list-container::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 4px;
+}
+
+.tracks-list-container::-webkit-scrollbar-thumb:hover {
+  background: #764ba2;
 }
 
 .tracks-list {
@@ -533,6 +724,19 @@
 
 /* Tablets */
 @media (max-width: 768px) {
+  .password-modal {
+    padding: 30px 25px;
+    max-width: 400px;
+  }
+
+  .password-modal-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .password-modal-header p {
+    font-size: 0.95rem;
+  }
+
   .admin-container {
     padding: 20px 0;
     min-height: calc(100vh - 60px);
@@ -589,6 +793,18 @@
 
   .existing-tracks-section h2 {
     font-size: 1.5rem;
+  }
+
+  .tracks-count-container {
+    padding: 10px 12px;
+  }
+
+  .tracks-count {
+    font-size: 0.95rem;
+  }
+
+  .tracks-list-container {
+    height: 600px;
   }
 
   .track-item {
@@ -648,6 +864,35 @@
 
 /* Mobile devices */
 @media (max-width: 480px) {
+  .password-modal-overlay {
+    padding: 15px;
+  }
+
+  .password-modal {
+    padding: 25px 20px;
+    max-width: 100%;
+    border-radius: 15px;
+  }
+
+  .password-modal-header h2 {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+  }
+
+  .password-modal-header p {
+    font-size: 0.9rem;
+  }
+
+  .password-input {
+    padding: 12px 15px;
+    font-size: 1rem;
+  }
+
+  .password-submit-btn {
+    padding: 12px 25px;
+    font-size: 1rem;
+  }
+
   .admin-container {
     padding: 15px 0;
     min-height: calc(100vh - 50px);
@@ -833,6 +1078,24 @@
 
   .existing-tracks-section h2 {
     font-size: 1.3rem;
+  }
+
+  .tracks-count-container {
+    padding: 10px 12px;
+  }
+
+  .tracks-count {
+    font-size: 0.9rem;
+  }
+
+  .tracks-list-container {
+    height: 500px;
+  }
+
+  .search-input {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    color: #ffffff !important;
   }
 
   .track-item {

@@ -15,6 +15,9 @@ import {
   FaPlay,
   FaPause,
   FaTimes,
+  FaSlidersH,
+  FaChartBar,
+  FaDownload,
 } from 'react-icons/fa';
 import dance from '../Images/dance.gif';
 import dance2 from '../Images/dance2.gif';
@@ -98,6 +101,19 @@ const Play = () => {
   const progressBarRef = useRef(null); // Ref for progress bar element
   const wasDraggingRef = useRef(false); // Track if user was dragging to prevent click after drag
   const [showThemeModal, setShowThemeModal] = useState(false); // Track theme modal visibility
+  const [showEqualizer, setShowEqualizer] = useState(false); // Track equalizer visibility
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false); // Track analysis modal visibility
+  const [showDownloadModal, setShowDownloadModal] = useState(false); // Track download modal visibility
+  const [playbackSpeed, setPlaybackSpeed] = useState(1); // Track playback speed
+  const audioContextRef = useRef(null); // Web Audio API context
+  const sourceNodeRef = useRef(null); // Audio source node
+  const gainNodesRef = useRef([]); // Gain nodes for each frequency band
+  const biquadFiltersRef = useRef([]); // Biquad filters for each frequency band
+  const isSourceCreatedRef = useRef(false); // Track if source has been created
+  const [equalizerGains, setEqualizerGains] = useState([
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  ]); // 10-band equalizer gains
+  const currentTrackLoggedRef = useRef(null); // Track if current track has been logged to history
 
   // Shuffle the GIFs on each reload
   const [shuffledGifs, setShuffledGifs] = useState([]);
@@ -239,19 +255,138 @@ const Play = () => {
     setDisplayedTracksCount(10);
   }, [searchQuery, musicList, showFavoritesOnly, favorites, selectedArtist]);
 
+  // Initialize Web Audio API and equalizer
+  const initializeAudioContext = useCallback(() => {
+    if (!audioRef.current) return;
+
+    try {
+      // Create audio context if it doesn't exist
+      if (!audioContextRef.current) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioContextRef.current = new AudioContext();
+      }
+
+      const audioContext = audioContextRef.current;
+
+      // Resume audio context if suspended (required by some browsers)
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+
+      // Only create source once per audio element
+      if (!isSourceCreatedRef.current) {
+        try {
+          // Disconnect existing source if any
+          if (sourceNodeRef.current) {
+            try {
+              sourceNodeRef.current.disconnect();
+            } catch {
+              // Source might already be disconnected
+            }
+          }
+
+          // Create media element source from audio element
+          const source = audioContext.createMediaElementSource(
+            audioRef.current
+          );
+          sourceNodeRef.current = source;
+          isSourceCreatedRef.current = true;
+
+          // Frequency bands for 10-band equalizer (Hz)
+          const frequencies = [
+            31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000,
+          ];
+
+          // Create a master gain node
+          const masterGain = audioContext.createGain();
+          masterGain.gain.value = 1;
+
+          // Create filters for each band (connected in series)
+          const filters = [];
+
+          frequencies.forEach((freq, index) => {
+            // Create a peaking filter for each frequency band
+            const filter = audioContext.createBiquadFilter();
+            filter.type = 'peaking';
+            filter.frequency.value = freq;
+            filter.Q.value = 1;
+            filter.gain.value = equalizerGains[index];
+            filters.push(filter);
+          });
+
+          // Connect all filters in series: source -> filter1 -> filter2 -> ... -> masterGain -> destination
+          let currentNode = source;
+          filters.forEach(filter => {
+            currentNode.connect(filter);
+            currentNode = filter;
+          });
+          currentNode.connect(masterGain);
+          masterGain.connect(audioContext.destination);
+
+          biquadFiltersRef.current = filters;
+          gainNodesRef.current = [masterGain];
+        } catch (error) {
+          console.error('Error creating audio source:', error);
+          // If source creation fails, we'll just update existing filters
+        }
+      } else {
+        // Source already exists, just update filter gains
+        if (biquadFiltersRef.current.length > 0) {
+          equalizerGains.forEach((gain, index) => {
+            if (biquadFiltersRef.current[index]) {
+              biquadFiltersRef.current[index].gain.value = gain;
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing audio context:', error);
+    }
+  }, [equalizerGains]);
+
+  // Update equalizer gains when they change
+  useEffect(() => {
+    if (biquadFiltersRef.current.length > 0) {
+      equalizerGains.forEach((gain, index) => {
+        if (biquadFiltersRef.current[index]) {
+          biquadFiltersRef.current[index].gain.value = gain;
+        }
+      });
+    }
+  }, [equalizerGains]);
+
   const playTrack = track => {
     setCurrentTrack(track);
     setIsPlaying(true);
     setCurrentTime(0);
+    // Reset logged flag for new track
+    currentTrackLoggedRef.current = null;
   };
 
   useEffect(() => {
     if (audioRef.current && isPlaying && currentTrack) {
+      // Initialize audio context when track changes
+      initializeAudioContext();
       audioRef.current.play().catch(error => {
         console.error('Error playing audio:', error);
       });
     }
-  }, [currentTrack, isPlaying]);
+  }, [currentTrack, isPlaying, initializeAudioContext]);
+
+  // Initialize audio context when component mounts or audio element is ready
+  useEffect(() => {
+    if (audioRef.current && currentTrack) {
+      const handleCanPlay = () => {
+        initializeAudioContext();
+      };
+      audioRef.current.addEventListener('canplay', handleCanPlay);
+      return () => {
+        if (audioRef.current) {
+          audioRef.current.removeEventListener('canplay', handleCanPlay);
+        }
+      };
+    }
+  }, [currentTrack, initializeAudioContext]);
 
   const playNextTrack = useCallback(() => {
     if (!currentTrack || filteredMusicList.length === 0) return;
@@ -271,6 +406,8 @@ const Play = () => {
     setCurrentTrack(nextTrack);
     setIsPlaying(true);
     setCurrentTime(0);
+    // Reset logged flag for new track
+    currentTrackLoggedRef.current = null;
   }, [currentTrack, filteredMusicList]);
 
   const playPreviousTrack = useCallback(() => {
@@ -292,6 +429,8 @@ const Play = () => {
     setCurrentTrack(prevTrack);
     setIsPlaying(true);
     setCurrentTime(0);
+    // Reset logged flag for new track
+    currentTrackLoggedRef.current = null;
   }, [currentTrack, filteredMusicList]);
 
   // Media Session API for notification center player
@@ -507,9 +646,25 @@ const Play = () => {
     };
   }, [isPlaying, currentTrack]);
 
-  // const downloadTrack = track => {
-  //   window.open(track.fileUrl, '_blank');
-  // };
+  const downloadTrack = track => {
+    if (track && track.fileUrl) {
+      const link = document.createElement('a');
+      link.href = track.fileUrl;
+      link.download = track.name || 'track';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setShowDownloadModal(false);
+    }
+  };
+
+  const openDownloadModal = () => {
+    setShowDownloadModal(true);
+  };
+
+  const closeDownloadModal = () => {
+    setShowDownloadModal(false);
+  };
 
   const toggleFavorite = (track, e) => {
     e.stopPropagation(); // Prevent card click when clicking heart
@@ -564,6 +719,52 @@ const Play = () => {
     setShowThemeModal(false);
   };
 
+  // Check if listening history exists and is not empty
+  const hasListeningHistory = () => {
+    try {
+      const savedHistory = localStorage.getItem('beatifyListeningHistory');
+      if (!savedHistory) return false;
+      const history = JSON.parse(savedHistory);
+      return Array.isArray(history) && history.length > 0;
+    } catch {
+      return false;
+    }
+  };
+
+  // Get listening history from localStorage
+  const getListeningHistory = () => {
+    try {
+      const savedHistory = localStorage.getItem('beatifyListeningHistory');
+      if (!savedHistory) return [];
+      const history = JSON.parse(savedHistory);
+      return Array.isArray(history) ? history : [];
+    } catch (error) {
+      console.error('Error loading listening history:', error);
+      return [];
+    }
+  };
+
+  // Get top 3 artists from localStorage
+  const getTop3Artists = () => {
+    try {
+      const savedTop3 = localStorage.getItem('beatifyTop3Artists');
+      if (!savedTop3) return [];
+      const top3 = JSON.parse(savedTop3);
+      return Array.isArray(top3) && top3.length > 0 ? top3 : [];
+    } catch (error) {
+      console.error('Error loading top 3 artists:', error);
+      return [];
+    }
+  };
+
+  const openAnalysisModal = () => {
+    setShowAnalysisModal(true);
+  };
+
+  const closeAnalysisModal = () => {
+    setShowAnalysisModal(false);
+  };
+
   const selectTheme = themeIndex => {
     setCurrentTheme(themeIndex);
     localStorage.setItem('beatifyTheme', themeIndex.toString());
@@ -603,6 +804,79 @@ const Play = () => {
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Track listening history and calculate top 3 artists
+  const updateListeningHistory = useCallback(track => {
+    if (!track || !track.artist) return;
+
+    try {
+      // Get current listening history from localStorage
+      const historyKey = 'beatifyListeningHistory';
+      const savedHistory = localStorage.getItem(historyKey);
+      let listeningHistory = savedHistory ? JSON.parse(savedHistory) : [];
+
+      // Add current track's artist and song name to history
+      listeningHistory.push({
+        artist: track.artist,
+        songName: track.name,
+        timestamp: Date.now(),
+      });
+
+      // Keep only the last 100 entries
+      if (listeningHistory.length > 100) {
+        listeningHistory = listeningHistory.slice(-100);
+      }
+
+      // Save updated history
+      localStorage.setItem(historyKey, JSON.stringify(listeningHistory));
+
+      // Calculate top 3 artists from the last 100 songs
+      const artistCounts = {};
+      listeningHistory.forEach(entry => {
+        const artist = entry.artist;
+        artistCounts[artist] = (artistCounts[artist] || 0) + 1;
+      });
+
+      // Sort artists by count (descending) and get top 3
+      const sortedArtists = Object.entries(artistCounts)
+        .sort((a, b) => b[1] - a[1]) // Sort by count descending
+        .slice(0, 3) // Get top 3
+        .map(([artist]) => artist); // Extract just the artist names
+
+      // Save top 3 artists to localStorage
+      localStorage.setItem('beatifyTop3Artists', JSON.stringify(sortedArtists));
+    } catch (error) {
+      console.error('Error updating listening history:', error);
+    }
+  }, []);
+
+  // Handle equalizer gain changes
+  const handleEqualizerChange = (index, value) => {
+    const newGains = [...equalizerGains];
+    newGains[index] = parseFloat(value);
+    setEqualizerGains(newGains);
+  };
+
+  // Reset equalizer to flat
+  const resetEqualizer = () => {
+    setEqualizerGains([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  };
+
+  // Cycle through playback speeds: 1 → 1.25 → 1.5 → 2 → 0.25 → 0.5 → 0.75 → 1
+  const cyclePlaybackSpeed = () => {
+    const speeds = [1, 1.25, 1.5, 2, 0.25, 0.5, 0.75];
+    const currentIndex = speeds.indexOf(playbackSpeed);
+    const nextIndex = (currentIndex + 1) % speeds.length;
+    const nextSpeed = speeds[nextIndex];
+    setPlaybackSpeed(nextSpeed);
+  };
+
+  // Apply playback speed to audio element
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackSpeed;
+    }
+  }, [playbackSpeed]);
 
   const updateProgress = useCallback(
     clientX => {
@@ -805,6 +1079,20 @@ const Play = () => {
                 </>
               )}
             </button>
+            {hasListeningHistory() && (
+              <button
+                className='menu-item'
+                onClick={openAnalysisModal}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}
+              >
+                <FaChartBar style={{ fontSize: '18px' }} />
+                Analysis
+              </button>
+            )}
             <button
               className='menu-item'
               onClick={openThemeModal}
@@ -946,7 +1234,7 @@ const Play = () => {
               </div>
             ) : (
               <div
-                className='music-grid'
+                className={`music-grid ${showEqualizer ? 'has-equalizer' : ''}`}
                 style={{
                   paddingBottom: currentTrack ? '68px' : '0px',
                 }}
@@ -1020,13 +1308,39 @@ const Play = () => {
       )}
 
       {currentTrack && (
-        <div className='audio-player'>
+        <div className={`audio-player ${showEqualizer ? 'has-equalizer' : ''}`}>
           <div className='player-content'>
             <div className='player-info'>
-              <h4>{currentTrack.name}</h4>
-              <p>
-                {currentTrack.artist} - {currentTrack.album}
-              </p>
+              <div className='player-info-buttons'>
+                <button
+                  className={`equalizer-toggle-button ${showEqualizer ? 'active' : ''}`}
+                  onClick={() => setShowEqualizer(!showEqualizer)}
+                  aria-label='Toggle equalizer'
+                >
+                  <FaSlidersH />
+                </button>
+                <button
+                  className='download-track-button'
+                  onClick={openDownloadModal}
+                  aria-label='Download track'
+                >
+                  <FaDownload />
+                </button>
+                <button
+                  className='speed-button-top'
+                  onClick={cyclePlaybackSpeed}
+                  aria-label={`Playback speed: ${playbackSpeed}x`}
+                  title={`Playback speed: ${playbackSpeed}x`}
+                >
+                  {playbackSpeed}x
+                </button>
+              </div>
+              <div className='player-info-text'>
+                <h4>{currentTrack.name}</h4>
+                <p>
+                  {currentTrack.artist} - {currentTrack.album}
+                </p>
+              </div>
             </div>
             <div className='player-controls'>
               <button
@@ -1096,13 +1410,68 @@ const Play = () => {
               </div>
               <span className='time-display'>{formatTime(duration)}</span>
             </div>
+            {showEqualizer && (
+              <div className='equalizer-container'>
+                <div className='equalizer-header'>
+                  <h5>Equalizer</h5>
+                  <button
+                    className='equalizer-reset-button'
+                    onClick={resetEqualizer}
+                    aria-label='Reset equalizer'
+                  >
+                    Reset
+                  </button>
+                </div>
+                <div className='equalizer-bands'>
+                  {[
+                    { label: '31', index: 0 },
+                    { label: '62', index: 1 },
+                    { label: '125', index: 2 },
+                    { label: '250', index: 3 },
+                    { label: '500', index: 4 },
+                    { label: '1k', index: 5 },
+                    { label: '2k', index: 6 },
+                    { label: '4k', index: 7 },
+                    { label: '8k', index: 8 },
+                    { label: '16k', index: 9 },
+                  ].map(({ label, index }) => (
+                    <div key={index} className='equalizer-band'>
+                      <input
+                        type='range'
+                        min='-12'
+                        max='12'
+                        step='0.5'
+                        value={equalizerGains[index]}
+                        onChange={e =>
+                          handleEqualizerChange(index, e.target.value)
+                        }
+                        className='equalizer-slider'
+                        aria-label={`${label}Hz band`}
+                        orient='vertical'
+                      />
+                      <label className='equalizer-label'>{label}</label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <audio
             ref={audioRef}
             autoPlay={isPlaying}
             src={currentTrack.fileUrl}
             onEnded={playNextTrack}
-            onPlay={() => setIsPlaying(true)}
+            onPlay={() => {
+              setIsPlaying(true);
+              // Track listening history when track starts playing (only once per track)
+              if (
+                currentTrack &&
+                currentTrackLoggedRef.current !== currentTrack.id
+              ) {
+                updateListeningHistory(currentTrack);
+                currentTrackLoggedRef.current = currentTrack.id;
+              }
+            }}
             onPause={() => setIsPlaying(false)}
             onTimeUpdate={() => {
               if (audioRef.current && !isDragging) {
@@ -1163,6 +1532,399 @@ const Play = () => {
                   )}
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Analysis Modal */}
+      {showAnalysisModal && (
+        <div
+          className='analysis-modal-overlay'
+          onClick={closeAnalysisModal}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+          }}
+        >
+          <div
+            className='analysis-modal'
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderRadius: '20px',
+              padding: '30px',
+              maxWidth: '600px',
+              width: '90%',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              position: 'relative',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
+              }}
+            >
+              <h2
+                style={{
+                  color: 'white',
+                  margin: 0,
+                  fontSize: '20px',
+                  fontWeight: 'bold',
+                }}
+              >
+                Listening History
+              </h2>
+              <button
+                onClick={closeAnalysisModal}
+                aria-label='Close analysis modal'
+                style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: '18px',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={e => {
+                  e.target.style.background = 'rgba(255, 255, 255, 0.3)';
+                }}
+                onMouseLeave={e => {
+                  e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                }}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            {/* Top 3 Artists Section */}
+            {getTop3Artists().length > 0 && (
+              <div
+                style={{
+                  marginBottom: '25px',
+                  paddingBottom: '20px',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+                }}
+              >
+                <h3
+                  style={{
+                    color: 'white',
+                    margin: '0 0 15px 0',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                  }}
+                >
+                  Top 3 Most Listened Artists
+                </h3>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                  }}
+                >
+                  {getTop3Artists().map((artist, index) => {
+                    const medalColors = [
+                      {
+                        bg: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                        border: '#FFD700',
+                      }, // Gold
+                      {
+                        bg: 'linear-gradient(135deg, #C0C0C0 0%, #A0A0A0 100%)',
+                        border: '#C0C0C0',
+                      }, // Silver
+                      {
+                        bg: 'linear-gradient(135deg, #CD7F32 0%, #B87333 100%)',
+                        border: '#CD7F32',
+                      }, // Bronze
+                    ];
+                    const medalLabels = ['🥇', '🥈', '🥉'];
+                    const color = medalColors[index] || medalColors[0];
+
+                    return (
+                      <div
+                        key={index}
+                        style={{
+                          background: color.bg,
+                          borderRadius: '12px',
+                          padding: '15px 18px',
+                          border: `2px solid ${color.border}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '15px',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '22px',
+                            lineHeight: '1',
+                          }}
+                        >
+                          {medalLabels[index]}
+                        </span>
+                        <span
+                          style={{
+                            color: 'white',
+                            fontSize: '14px',
+                            fontWeight: 'bold',
+                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                            flex: 1,
+                          }}
+                        >
+                          {artist}
+                        </span>
+                        <span
+                          style={{
+                            color: 'rgba(255, 255, 255, 0.9)',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            background: 'rgba(0, 0, 0, 0.2)',
+                            padding: '4px 10px',
+                            borderRadius: '12px',
+                          }}
+                        >
+                          #{index + 1}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            <div
+              style={{
+                color: 'white',
+                fontSize: '12px',
+                marginBottom: '15px',
+                opacity: 0.9,
+              }}
+            >
+              Last {Math.min(100, getListeningHistory().length)} songs played
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                maxHeight: 'calc(70vh - 300px)',
+                overflowY: 'auto',
+                paddingRight: '5px',
+              }}
+            >
+              {getListeningHistory()
+                .slice()
+                .reverse()
+                .map((entry, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      borderRadius: '10px',
+                      padding: '12px 15px',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px',
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: 'white',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                        }}
+                      >
+                        {entry.songName || 'Unknown Song'}
+                      </span>
+                      <span
+                        style={{
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          fontSize: '12px',
+                        }}
+                      >
+                        {entry.artist || 'Unknown Artist'}
+                      </span>
+                    </div>
+                    <span
+                      style={{
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        fontSize: '11px',
+                      }}
+                    >
+                      {new Date(entry.timestamp).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Download Confirmation Modal */}
+      {showDownloadModal && currentTrack && (
+        <div
+          className='download-modal-overlay'
+          onClick={closeDownloadModal}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+          }}
+        >
+          <div
+            className='download-modal'
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderRadius: '20px',
+              padding: '30px',
+              maxWidth: '400px',
+              width: '90%',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              position: 'relative',
+            }}
+          >
+            <button
+              onClick={closeDownloadModal}
+              aria-label='Close download modal'
+              className='download-modal-close'
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'white',
+                fontSize: '18px',
+                transition: 'background 0.2s',
+              }}
+              onMouseEnter={e => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.3)';
+              }}
+              onMouseLeave={e => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+              }}
+            >
+              <FaTimes />
+            </button>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px',
+                alignItems: 'center',
+              }}
+            >
+              <h2
+                style={{
+                  color: 'white',
+                  margin: '0 0 10px 0',
+                  fontSize: '24px',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                }}
+              >
+                Download Track
+              </h2>
+              <div
+                style={{
+                  textAlign: 'center',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  fontSize: '16px',
+                  marginBottom: '10px',
+                }}
+              >
+                <p style={{ margin: '0 0 8px 0', fontWeight: '600' }}>
+                  {currentTrack.name}
+                </p>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: '14px',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                  }}
+                >
+                  {currentTrack.artist} - {currentTrack.album}
+                </p>
+              </div>
+              <button
+                onClick={() => downloadTrack(currentTrack)}
+                className='download-modal-button'
+                style={{
+                  background: '#000000',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '15px 30px',
+                  color: 'white',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4)',
+                }}
+                onMouseEnter={e => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.5)';
+                }}
+                onMouseLeave={e => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.4)';
+                }}
+              >
+                <FaDownload />
+                Download
+              </button>
             </div>
           </div>
         </div>
