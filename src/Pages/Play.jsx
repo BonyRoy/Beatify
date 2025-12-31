@@ -105,14 +105,15 @@ const Play = () => {
   const [showAnalysisModal, setShowAnalysisModal] = useState(false); // Track analysis modal visibility
   const [showDownloadModal, setShowDownloadModal] = useState(false); // Track download modal visibility
   const [playbackSpeed, setPlaybackSpeed] = useState(1); // Track playback speed
-  const audioContextRef = useRef(null); // Web Audio API context
-  const sourceNodeRef = useRef(null); // Audio source node
-  const gainNodesRef = useRef([]); // Gain nodes for each frequency band
-  const biquadFiltersRef = useRef([]); // Biquad filters for each frequency band
-  const isSourceCreatedRef = useRef(false); // Track if source has been created
-  const [equalizerGains, setEqualizerGains] = useState([
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  ]); // 10-band equalizer gains
+  // EQUALIZER DISABLED - COMMENTED OUT REFS
+  // const audioContextRef = useRef(null); // Web Audio API context
+  // const sourceNodeRef = useRef(null); // Audio source node
+  // const gainNodesRef = useRef([]); // Gain nodes for each frequency band
+  // const biquadFiltersRef = useRef([]); // Biquad filters for each frequency band
+  // const isSourceCreatedRef = useRef(false); // Track if source has been created
+  // const [equalizerGains, setEqualizerGains] = useState([
+  //   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // ]); // 10-band equalizer gains
   const currentTrackLoggedRef = useRef(null); // Track if current track has been logged to history
 
   // Shuffle the GIFs on each reload
@@ -256,6 +257,8 @@ const Play = () => {
   }, [searchQuery, musicList, showFavoritesOnly, favorites, selectedArtist]);
 
   // Initialize Web Audio API and equalizer
+  // COMMENTED OUT - CAUSING ISSUES ON MOBILE BROWSERS
+  /*
   const initializeAudioContext = useCallback(() => {
     if (!audioRef.current) return;
 
@@ -354,6 +357,7 @@ const Play = () => {
       });
     }
   }, [equalizerGains]);
+  */
 
   const playTrack = track => {
     setCurrentTrack(track);
@@ -365,15 +369,16 @@ const Play = () => {
 
   useEffect(() => {
     if (audioRef.current && isPlaying && currentTrack) {
-      // Initialize audio context when track changes
-      initializeAudioContext();
+      // EQUALIZER DISABLED - initializeAudioContext();
       audioRef.current.play().catch(error => {
         console.error('Error playing audio:', error);
       });
     }
-  }, [currentTrack, isPlaying, initializeAudioContext]);
+  }, [currentTrack, isPlaying]);
 
   // Initialize audio context when component mounts or audio element is ready
+  // EQUALIZER DISABLED
+  /*
   useEffect(() => {
     if (audioRef.current && currentTrack) {
       const handleCanPlay = () => {
@@ -387,6 +392,7 @@ const Play = () => {
       };
     }
   }, [currentTrack, initializeAudioContext]);
+  */
 
   const playNextTrack = useCallback(() => {
     if (!currentTrack || filteredMusicList.length === 0) return;
@@ -851,6 +857,8 @@ const Play = () => {
   }, []);
 
   // Handle equalizer gain changes
+  // COMMENTED OUT - EQUALIZER DISABLED
+  /*
   const handleEqualizerChange = (index, value) => {
     const newGains = [...equalizerGains];
     newGains[index] = parseFloat(value);
@@ -861,6 +869,7 @@ const Play = () => {
   const resetEqualizer = () => {
     setEqualizerGains([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
   };
+  */
 
   // Cycle through playback speeds: 1 → 1.25 → 1.5 → 2 → 0.25 → 0.5 → 0.75 → 1
   const cyclePlaybackSpeed = () => {
@@ -1316,6 +1325,8 @@ const Play = () => {
                   className={`equalizer-toggle-button ${showEqualizer ? 'active' : ''}`}
                   onClick={() => setShowEqualizer(!showEqualizer)}
                   aria-label='Toggle equalizer'
+                  disabled
+                  style={{ opacity: 0.5, cursor: 'not-allowed' }}
                 >
                   <FaSlidersH />
                 </button>
@@ -1410,13 +1421,14 @@ const Play = () => {
               </div>
               <span className='time-display'>{formatTime(duration)}</span>
             </div>
-            {showEqualizer && (
+            {/* EQUALIZER DISABLED - CAUSING ISSUES ON MOBILE BROWSERS */}
+            {/* {showEqualizer && (
               <div className='equalizer-container'>
                 <div className='equalizer-header'>
                   <h5>Equalizer</h5>
                   <button
                     className='equalizer-reset-button'
-                    onClick={resetEqualizer}
+                    onClick={() => {}}
                     aria-label='Reset equalizer'
                   >
                     Reset
@@ -1441,10 +1453,8 @@ const Play = () => {
                         min='-12'
                         max='12'
                         step='0.5'
-                        value={equalizerGains[index]}
-                        onChange={e =>
-                          handleEqualizerChange(index, e.target.value)
-                        }
+                        value={0}
+                        onChange={() => {}}
                         className='equalizer-slider'
                         aria-label={`${label}Hz band`}
                         orient='vertical'
@@ -1454,7 +1464,7 @@ const Play = () => {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
           </div>
           <audio
             ref={audioRef}
