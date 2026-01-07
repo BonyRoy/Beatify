@@ -29,6 +29,7 @@ import './Play.css';
 import Artists from '../Components/Artists';
 import Playlists from '../Components/Playlists';
 import PlaylistDetail from '../Components/PlaylistDetail';
+import AudioPlayer from '../Components/AudioPlayer';
 
 // Theme gradients array
 const THEMES = [
@@ -54,20 +55,24 @@ const playlistTracks = {
   EDM: [],
   Global: [],
   Thar: [
-    '4de44c58-7b04-4934-9774-ce0ede19cee8',
-    '5c120cbd-8274-458a-9554-d60bb6ae1014',
-    'aae0a4cc-4c88-4af5-a93f-d89f3e5f051e',
-    'a07902d5-12ed-4bea-b3fe-d1f8b93b0a4c',
-    'c64a9313-f6d7-4298-a16b-45611a9d0ed4',
-    '2b4c3553-fb3a-4aed-9134-2227c7965ad2',
-    '340837c7-8ff6-4f22-bd4f-17f24466ed05',
-    '990e2d10-890d-4ce7-a819-b043b57e811a',
-    'b9915cc9-9a59-4757-9227-c86e27f0c260',
-    'c315071c-4f54-4ddd-b8b2-c0e409ed4cca',
-    '340c96d5-8926-44b1-856c-e1a7076e0331',
-    '332dfa14-6e0d-460d-a35f-78495b1b9cb0',
     '439bb5df-b96d-4e1c-8ef3-e688b1e75edd',
-    '5a9cf65b-57b7-4857-9f42-03ee40ee4c97',
+    '7022381d-b9e9-4ef5-b5a2-ca8e81bd4458',
+    'b1c73dd1-1680-49f0-8f4a-a229469115a3',
+    '91198565-b1e8-422d-84ec-5e915ec6be12',
+    '5192789a-de03-4188-a6a1-95452a78cced',
+    '839df6da-45b7-404b-ae4d-edd5d3cc1a40',
+    '670e7849-d522-4539-ae10-49c7b3841b4e',
+    '94715bab-f9b4-49dd-b4f3-7f76295296cd',
+    '1b3bc69e-594a-4494-af17-11a81e93bcb6',
+    'f2f0eda2-85e5-4e24-bdac-5c25a3f243a7',
+    'bac3a359-fc0d-41aa-86ef-bc81d9dd6544',
+    '9b628a46-d5f0-4062-81a4-704e5b7b82e0',
+    'f27e940c-782d-45ce-866c-aeeec34ee308',
+    '2db89b8c-87cc-4896-8672-db7898cf58d9',
+    '3ab2d91f-985e-4723-b200-4d18cd638a31',
+    'b04aa879-1ad5-4cd1-aa64-bc3dc05ad810',
+    '049d9f80-d940-41c3-800e-e13f8a97f4a1',
+    'a216c924-2ff1-4292-a058-d922f81d5641',
   ],
 };
 
@@ -97,14 +102,11 @@ const Play = () => {
   const shouldAutoResumeRef = useRef(false); // Track if we should auto-resume after interruption
   const [displayedTracksCount, setDisplayedTracksCount] = useState(10); // Lazy loading: start with 10 tracks
   const scrollableContentRef = useRef(null); // Ref for scrollable content container
-  const [isDragging, setIsDragging] = useState(false); // Track if user is dragging progress bar
-  const progressBarRef = useRef(null); // Ref for progress bar element
-  const wasDraggingRef = useRef(false); // Track if user was dragging to prevent click after drag
   const [showThemeModal, setShowThemeModal] = useState(false); // Track theme modal visibility
-  const [showEqualizer, setShowEqualizer] = useState(false); // Track equalizer visibility
   const [showAnalysisModal, setShowAnalysisModal] = useState(false); // Track analysis modal visibility
   const [showDownloadModal, setShowDownloadModal] = useState(false); // Track download modal visibility
   const [playbackSpeed, setPlaybackSpeed] = useState(1); // Track playback speed
+  const [isPlayerMinimized, setIsPlayerMinimized] = useState(false); // Track if player is minimized
   // EQUALIZER DISABLED - COMMENTED OUT REFS
   // const audioContextRef = useRef(null); // Web Audio API context
   // const sourceNodeRef = useRef(null); // Audio source node
@@ -363,18 +365,15 @@ const Play = () => {
     setCurrentTrack(track);
     setIsPlaying(true);
     setCurrentTime(0);
+    setDuration(0);
     // Reset logged flag for new track
     currentTrackLoggedRef.current = null;
   };
 
-  useEffect(() => {
-    if (audioRef.current && isPlaying && currentTrack) {
-      // EQUALIZER DISABLED - initializeAudioContext();
-      audioRef.current.play().catch(error => {
-        console.error('Error playing audio:', error);
-      });
-    }
-  }, [currentTrack, isPlaying]);
+  // Audio ref callback to get reference from AudioPlayer
+  const handleAudioRef = useCallback(audioElement => {
+    audioRef.current = audioElement;
+  }, []);
 
   // Initialize audio context when component mounts or audio element is ready
   // EQUALIZER DISABLED
@@ -543,6 +542,13 @@ const Play = () => {
           );
         }
       }
+
+      // Minimize player when scrolling down (more than 100px)
+      if (scrollTop > 100 && currentTrack) {
+        setIsPlayerMinimized(true);
+      } else if (scrollTop <= 100) {
+        setIsPlayerMinimized(false);
+      }
     };
 
     scrollableElement.addEventListener('scroll', handleScroll);
@@ -550,7 +556,7 @@ const Play = () => {
     return () => {
       scrollableElement.removeEventListener('scroll', handleScroll);
     };
-  }, [displayedTracksCount, filteredMusicList.length]);
+  }, [displayedTracksCount, filteredMusicList.length, currentTrack]);
 
   // Handle audio interruptions (like phone calls)
   useEffect(() => {
@@ -887,101 +893,15 @@ const Play = () => {
     }
   }, [playbackSpeed]);
 
-  const updateProgress = useCallback(
-    clientX => {
-      if (!audioRef.current || !duration || !progressBarRef.current) return;
-      const rect = progressBarRef.current.getBoundingClientRect();
-      const clickX = clientX - rect.left;
-      const percentage = Math.max(0, Math.min(1, clickX / rect.width));
-      const newTime = percentage * duration;
-      audioRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
-    },
-    [duration]
-  );
-
-  const handleSeek = e => {
-    // Prevent click if user was just dragging
-    if (wasDraggingRef.current) {
-      wasDraggingRef.current = false;
-      return;
-    }
-    if (!audioRef.current || !duration) return;
-    updateProgress(e.clientX);
-  };
-
-  const handleMouseDown = e => {
-    e.preventDefault();
-    wasDraggingRef.current = false;
-    setIsDragging(true);
-    updateProgress(e.clientX);
-  };
-
-  const handleMouseMove = useCallback(
-    e => {
-      if (isDragging) {
-        wasDraggingRef.current = true;
-        updateProgress(e.clientX);
-      }
-    },
-    [isDragging, updateProgress]
-  );
-
-  const handleMouseUp = useCallback(() => {
-    // Small delay to allow click event to check wasDraggingRef
-    setTimeout(() => {
-      setIsDragging(false);
-    }, 0);
+  // Handle time update from AudioPlayer
+  const handleTimeUpdate = useCallback(newTime => {
+    setCurrentTime(newTime);
   }, []);
 
-  const handleTouchStart = e => {
-    e.preventDefault();
-    wasDraggingRef.current = false;
-    setIsDragging(true);
-    const touch = e.touches[0];
-    updateProgress(touch.clientX);
-  };
-
-  const handleTouchMove = useCallback(
-    e => {
-      if (isDragging) {
-        wasDraggingRef.current = true;
-        const touch = e.touches[0];
-        updateProgress(touch.clientX);
-      }
-    },
-    [isDragging, updateProgress]
-  );
-
-  const handleTouchEnd = useCallback(() => {
-    // Small delay to allow any click events to check wasDraggingRef
-    setTimeout(() => {
-      setIsDragging(false);
-    }, 0);
+  // Handle duration update from AudioPlayer
+  const handleDurationUpdate = useCallback(newDuration => {
+    setDuration(newDuration);
   }, []);
-
-  // Add global mouse/touch event listeners for dragging
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.addEventListener('touchmove', handleTouchMove);
-      document.addEventListener('touchend', handleTouchEnd);
-
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        document.removeEventListener('touchmove', handleTouchMove);
-        document.removeEventListener('touchend', handleTouchEnd);
-      };
-    }
-  }, [
-    isDragging,
-    handleMouseMove,
-    handleMouseUp,
-    handleTouchMove,
-    handleTouchEnd,
-  ]);
 
   if (loading) {
     return (
@@ -995,522 +915,369 @@ const Play = () => {
   }
 
   // Show playlist detail view when a playlist is selected
-  if (selectedPlaylist && playlistTracks[selectedPlaylist]) {
-    return (
-      <PlaylistDetail
-        playlistName={selectedPlaylist}
-        trackIds={playlistTracks[selectedPlaylist]}
-        onBack={() => setSelectedPlaylist(null)}
-        currentTheme={THEMES[currentTheme]}
-        favorites={favorites}
-        onToggleFavorite={toggleFavorite}
-        formatReleaseDate={formatReleaseDate}
-        formatFileSize={formatFileSize}
-        getRandomDanceGif={getRandomDanceGif}
-      />
-    );
-  }
+  const showPlaylistDetail =
+    selectedPlaylist && playlistTracks[selectedPlaylist];
 
   return (
     <div
       className='play-container'
       style={{ background: THEMES[currentTheme] }}
     >
-      <div className='play-header'>
-        <h1>
-          <FaHeadphones
-            style={{ marginRight: '10px', verticalAlign: 'middle' }}
-          />
-          Beatify
-        </h1>
-        <p style={{ paddingTop: '10px' }}>
-          Where Music Finds You & Every Beat Moves You.
-        </p>
-      </div>
+      {showPlaylistDetail ? (
+        <PlaylistDetail
+          playlistName={selectedPlaylist}
+          trackIds={playlistTracks[selectedPlaylist]}
+          onBack={() => setSelectedPlaylist(null)}
+          currentTheme={THEMES[currentTheme]}
+          favorites={favorites}
+          onToggleFavorite={toggleFavorite}
+          formatReleaseDate={formatReleaseDate}
+          formatFileSize={formatFileSize}
+          getRandomDanceGif={getRandomDanceGif}
+          currentTrack={currentTrack}
+          onPlayTrack={playTrack}
+          isPlayerMinimized={isPlayerMinimized}
+          setIsPlayerMinimized={setIsPlayerMinimized}
+        />
+      ) : (
+        <>
+          <div className='play-header'>
+            <h1>
+              <FaHeadphones
+                style={{ marginRight: '10px', verticalAlign: 'middle' }}
+              />
+              Beatify
+            </h1>
+            <p style={{ paddingTop: '10px' }}>
+              Where Music Finds You & Every Beat Moves You.
+            </p>
+          </div>
 
-      {/* Hamburger Menu */}
-      <div className='hamburger-menu-container' ref={menuRef}>
-        <div
-          className='hamburger-icon'
-          onClick={() => setShowMenu(prev => !prev)} // <-- toggle
-        >
-          <FaBars />
-        </div>
+          {/* Hamburger Menu */}
+          <div className='hamburger-menu-container' ref={menuRef}>
+            <div
+              className='hamburger-icon'
+              onClick={() => setShowMenu(prev => !prev)} // <-- toggle
+            >
+              <FaBars />
+            </div>
 
-        {showMenu && ( // <-- conditionally rendered menu
-          <div className='hamburger-dropdown'>
-            {/* <button
+            {showMenu && ( // <-- conditionally rendered menu
+              <div className='hamburger-dropdown'>
+                {/* <button
               disabled={true}
               className='menu-item'
               onClick={() => navigate('/admin')}
             >
               Admin
             </button> */}
-            <button
-              className='menu-item'
-              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              {showFavoritesOnly ? (
-                <>
-                  <FaList style={{ fontSize: '18px' }} />
-                  Show All
-                </>
-              ) : (
-                <>
-                  <FaHeart style={{ fontSize: '18px', color: '#ff4757' }} />
-                  Favorites
-                </>
-              )}
-            </button>
-            <button
-              className='menu-item'
-              onClick={() => setShowPlaylists(!showPlaylists)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              {showPlaylists ? (
-                <>
-                  <FaMusic style={{ fontSize: '18px' }} />
-                  Show Tracks
-                </>
-              ) : (
-                <>
-                  <FaList style={{ fontSize: '18px' }} />
-                  Playlists
-                </>
-              )}
-            </button>
-            {hasListeningHistory() && (
-              <button
-                className='menu-item'
-                onClick={openAnalysisModal}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                }}
-              >
-                <FaChartBar style={{ fontSize: '18px' }} />
-                Analysis
-              </button>
+                <button
+                  className='menu-item'
+                  onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                  }}
+                >
+                  {showFavoritesOnly ? (
+                    <>
+                      <FaList style={{ fontSize: '18px' }} />
+                      Show All
+                    </>
+                  ) : (
+                    <>
+                      <FaHeart style={{ fontSize: '18px', color: '#ff4757' }} />
+                      Favorites
+                    </>
+                  )}
+                </button>
+                <button
+                  className='menu-item'
+                  onClick={() => setShowPlaylists(!showPlaylists)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                  }}
+                >
+                  {showPlaylists ? (
+                    <>
+                      <FaMusic style={{ fontSize: '18px' }} />
+                      Show Tracks
+                    </>
+                  ) : (
+                    <>
+                      <FaList style={{ fontSize: '18px' }} />
+                      Playlists
+                    </>
+                  )}
+                </button>
+                {hasListeningHistory() && (
+                  <button
+                    className='menu-item'
+                    onClick={openAnalysisModal}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                  >
+                    <FaChartBar style={{ fontSize: '18px' }} />
+                    Analysis
+                  </button>
+                )}
+                <button
+                  className='menu-item'
+                  onClick={openThemeModal}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      background: THEMES[currentTheme],
+                      border: '2px solid rgba(255, 255, 255, 0.3)',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                      flexShrink: 0,
+                    }}
+                  />
+                  Theme
+                </button>
+              </div>
             )}
-            <button
-              className='menu-item'
-              onClick={openThemeModal}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <div
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  background: THEMES[currentTheme],
-                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-                  flexShrink: 0,
-                }}
-              />
-              Theme
-            </button>
           </div>
-        )}
-      </div>
 
-      {showPlaylists ? (
-        <>
-          {musicList.length > 0 && (
-            <div className='search-container'>
-              <div style={{ position: 'relative', width: '100%' }}>
-                <FaSearch
-                  style={{
-                    position: 'absolute',
-                    left: '20px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontSize: '1rem',
-                    zIndex: 1,
-                    pointerEvents: 'none',
-                  }}
-                />
-                <input
-                  type='text'
-                  className='search-input'
-                  placeholder='Search playlists...'
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  style={{ paddingLeft: '50px' }}
-                />
-              </div>
-            </div>
-          )}
-          <Playlists
-            searchQuery={searchQuery}
-            favorites={playlistFavorites}
-            onToggleFavorite={togglePlaylistFavorite}
-            showFavoritesOnly={showFavoritesOnly}
-            currentTrack={currentTrack}
-            onPlaylistClick={playlistName => {
-              setSelectedPlaylist(playlistName);
-            }}
-            selectedPlaylist={selectedPlaylist}
-          />
-        </>
-      ) : (
-        <>
-          {musicList.length > 0 && (
-            <div className='artists-section'>
-              <Artists
+          {showPlaylists ? (
+            <>
+              {musicList.length > 0 && (
+                <div className='search-container'>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <FaSearch
+                      style={{
+                        position: 'absolute',
+                        left: '20px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        fontSize: '1rem',
+                        zIndex: 1,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <input
+                      type='text'
+                      className='search-input'
+                      placeholder='Search playlists...'
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      style={{ paddingLeft: '50px' }}
+                    />
+                  </div>
+                </div>
+              )}
+              <Playlists
                 searchQuery={searchQuery}
-                onArtistClick={artistName => {
-                  // Toggle: if same artist clicked, deselect; otherwise select new artist
-                  setSelectedArtist(prev =>
-                    prev === artistName ? null : artistName
-                  );
+                favorites={playlistFavorites}
+                onToggleFavorite={togglePlaylistFavorite}
+                showFavoritesOnly={showFavoritesOnly}
+                currentTrack={currentTrack}
+                onPlaylistClick={playlistName => {
+                  setSelectedPlaylist(playlistName);
                 }}
-                selectedArtist={selectedArtist}
+                selectedPlaylist={selectedPlaylist}
               />
-            </div>
-          )}
-          {musicList.length > 0 && (
-            <div className='search-container'>
-              <div style={{ position: 'relative', width: '100%' }}>
-                <FaSearch
-                  style={{
-                    position: 'absolute',
-                    left: '20px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontSize: '1rem',
-                    zIndex: 1,
-                    pointerEvents: 'none',
-                  }}
-                />
-                <input
-                  type='text'
-                  className='search-input'
-                  placeholder='Search by song, artist, genre, or album...'
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  style={{ paddingLeft: '50px' }}
-                />
-              </div>
-            </div>
-          )}
+            </>
+          ) : (
+            <>
+              {musicList.length > 0 && (
+                <div className='artists-section'>
+                  <Artists
+                    searchQuery={searchQuery}
+                    onArtistClick={artistName => {
+                      // Toggle: if same artist clicked, deselect; otherwise select new artist
+                      setSelectedArtist(prev =>
+                        prev === artistName ? null : artistName
+                      );
+                    }}
+                    selectedArtist={selectedArtist}
+                  />
+                </div>
+              )}
+              {musicList.length > 0 && (
+                <div className='search-container'>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <FaSearch
+                      style={{
+                        position: 'absolute',
+                        left: '20px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        fontSize: '1rem',
+                        zIndex: 1,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <input
+                      type='text'
+                      className='search-input'
+                      placeholder='Search by song, artist, genre, or album...'
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      style={{ paddingLeft: '50px' }}
+                    />
+                  </div>
+                </div>
+              )}
 
-          <div className='scrollable-content' ref={scrollableContentRef}>
-            {musicList.length === 0 ? (
-              <div className='empty-state'>
-                <div className='empty-icon'>
-                  <FaMusic style={{ fontSize: '4rem', color: '#667eea' }} />
-                </div>
-                <h2>No Music Found</h2>
-                <p>
-                  Ask Admin to upload some tracks in the panel to get started!
-                </p>
-              </div>
-            ) : filteredMusicList.length === 0 && showFavoritesOnly ? (
-              <div className='empty-state'>
-                <div className='empty-icon'>
-                  <FaHeart style={{ fontSize: '4rem', color: '#e74c3c' }} />
-                </div>
-                <h2>No Favorites Yet</h2>
-                <p>
-                  Start adding songs to your favorites by clicking the heart
-                  icon!
-                </p>
-              </div>
-            ) : filteredMusicList.length === 0 ? (
-              <div className='empty-state'>
-                <div className='empty-icon'>
-                  <FaSearch style={{ fontSize: '4rem', color: '#667eea' }} />
-                </div>
-                <h2>No Results Found</h2>
-                <p>Try adjusting your search query.</p>
-              </div>
-            ) : (
-              <div
-                className={`music-grid ${showEqualizer ? 'has-equalizer' : ''}`}
-                style={{
-                  paddingBottom: currentTrack ? '68px' : '0px',
-                }}
-              >
-                {filteredMusicList
-                  .slice(0, displayedTracksCount)
-                  .map((track, index) => (
-                    <div
-                      key={track.id}
-                      className={`track-card ${currentTrack?.id === track.id ? 'selected' : ''}`}
-                      onClick={() => playTrack(track)}
-                    >
-                      <div className='track-content-wrapper'>
-                        <div className='track-image-container'>
-                          <img
-                            src={getRandomDanceGif(index)}
-                            alt='Dancing animation'
-                          />
-                        </div>
-                        <div className='track-info-wrapper'>
-                          <div className='track-header'>
-                            <div className='track-title-section'>
-                              <h3 className='track-name'>{track.name}</h3>
+              <div className='scrollable-content' ref={scrollableContentRef}>
+                {musicList.length === 0 ? (
+                  <div className='empty-state'>
+                    <div className='empty-icon'>
+                      <FaMusic style={{ fontSize: '4rem', color: '#667eea' }} />
+                    </div>
+                    <h2>No Music Found</h2>
+                    <p>
+                      Ask Admin to upload some tracks in the panel to get
+                      started!
+                    </p>
+                  </div>
+                ) : filteredMusicList.length === 0 && showFavoritesOnly ? (
+                  <div className='empty-state'>
+                    <div className='empty-icon'>
+                      <FaHeart style={{ fontSize: '4rem', color: '#e74c3c' }} />
+                    </div>
+                    <h2>No Favorites Yet</h2>
+                    <p>
+                      Start adding songs to your favorites by clicking the heart
+                      icon!
+                    </p>
+                  </div>
+                ) : filteredMusicList.length === 0 ? (
+                  <div className='empty-state'>
+                    <div className='empty-icon'>
+                      <FaSearch
+                        style={{ fontSize: '4rem', color: '#667eea' }}
+                      />
+                    </div>
+                    <h2>No Results Found</h2>
+                    <p>Try adjusting your search query.</p>
+                  </div>
+                ) : (
+                  <div
+                    className='music-grid'
+                    style={{
+                      paddingBottom: currentTrack ? '68px' : '0px',
+                    }}
+                  >
+                    {filteredMusicList
+                      .slice(0, displayedTracksCount)
+                      .map((track, index) => (
+                        <div
+                          key={track.id}
+                          className={`track-card ${currentTrack?.id === track.id ? 'selected' : ''}`}
+                          onClick={() => playTrack(track)}
+                        >
+                          <div className='track-content-wrapper'>
+                            <div className='track-image-container'>
+                              <img
+                                src={getRandomDanceGif(index)}
+                                alt='Dancing animation'
+                              />
+                            </div>
+                            <div className='track-info-wrapper'>
+                              <div className='track-header'>
+                                <div className='track-title-section'>
+                                  <h3 className='track-name'>{track.name}</h3>
+                                  <div className='track-meta-info'>
+                                    <span className='track-meta-item'>
+                                      Released on:{' '}
+                                      {formatReleaseDate(track.releaseDate)}
+                                    </span>
+                                  </div>
+                                  <div className='track-artist-album-container'>
+                                    <div className='track-artist-album-wrapper'>
+                                      <span className='track-artist-album'>
+                                        {track.artist} - {track.album}
+                                      </span>
+                                      <span className='track-artist-album track-artist-album-duplicate'>
+                                        {track.artist} - {track.album}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <button
+                                  className='favorite-button'
+                                  onClick={e => toggleFavorite(track, e)}
+                                  aria-label={
+                                    favorites.has(track.uuid || track.id)
+                                      ? 'Remove from favorites'
+                                      : 'Add to favorites'
+                                  }
+                                >
+                                  {favorites.has(track.uuid || track.id) ? (
+                                    <FaHeart className='heart-icon filled' />
+                                  ) : (
+                                    <FaRegHeart className='heart-icon outline' />
+                                  )}
+                                </button>
+                              </div>
                               <div className='track-meta-info'>
+                                <span className='track-meta-separator'>
+                                  Size:
+                                </span>
                                 <span className='track-meta-item'>
-                                  Released on:{' '}
-                                  {formatReleaseDate(track.releaseDate)}
+                                  {formatFileSize(track.fileSize)}
                                 </span>
                               </div>
-                              <div className='track-artist-album-container'>
-                                <div className='track-artist-album-wrapper'>
-                                  <span className='track-artist-album'>
-                                    {track.artist} - {track.album}
-                                  </span>
-                                  <span className='track-artist-album track-artist-album-duplicate'>
-                                    {track.artist} - {track.album}
-                                  </span>
-                                </div>
-                              </div>
                             </div>
-                            <button
-                              className='favorite-button'
-                              onClick={e => toggleFavorite(track, e)}
-                              aria-label={
-                                favorites.has(track.uuid || track.id)
-                                  ? 'Remove from favorites'
-                                  : 'Add to favorites'
-                              }
-                            >
-                              {favorites.has(track.uuid || track.id) ? (
-                                <FaHeart className='heart-icon filled' />
-                              ) : (
-                                <FaRegHeart className='heart-icon outline' />
-                              )}
-                            </button>
-                          </div>
-                          <div className='track-meta-info'>
-                            <span className='track-meta-separator'>Size:</span>
-                            <span className='track-meta-item'>
-                              {formatFileSize(track.fileSize)}
-                            </span>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </>
       )}
 
-      {currentTrack && (
-        <div className={`audio-player ${showEqualizer ? 'has-equalizer' : ''}`}>
-          <div className='player-content'>
-            <div className='player-info'>
-              <div className='player-info-buttons'>
-                <button
-                  className={`equalizer-toggle-button ${showEqualizer ? 'active' : ''}`}
-                  onClick={() => setShowEqualizer(!showEqualizer)}
-                  aria-label='Toggle equalizer'
-                  disabled
-                  style={{ opacity: 0.5, cursor: 'not-allowed' }}
-                >
-                  <FaSlidersH />
-                </button>
-                <button
-                  className='download-track-button'
-                  onClick={openDownloadModal}
-                  aria-label='Download track'
-                >
-                  <FaDownload />
-                </button>
-                <button
-                  className='speed-button-top'
-                  onClick={cyclePlaybackSpeed}
-                  aria-label={`Playback speed: ${playbackSpeed}x`}
-                  title={`Playback speed: ${playbackSpeed}x`}
-                >
-                  {playbackSpeed}x
-                </button>
-              </div>
-              <div className='player-info-text'>
-                <h4>{currentTrack.name}</h4>
-                <p>
-                  {currentTrack.artist} - {currentTrack.album}
-                </p>
-              </div>
-            </div>
-            <div className='player-controls'>
-              <button
-                className='control-button prev-button'
-                onClick={playPreviousTrack}
-                aria-label='Previous track'
-              >
-                <FaStepBackward />
-              </button>
-              <button
-                className='control-button play-pause-button'
-                onClick={() => {
-                  if (audioRef.current) {
-                    if (isPlaying) {
-                      audioRef.current.pause();
-                      setIsPlaying(false);
-                    } else {
-                      audioRef.current.play();
-                      setIsPlaying(true);
-                    }
-                  }
-                }}
-                aria-label={isPlaying ? 'Pause' : 'Play'}
-              >
-                {isPlaying ? <FaPause /> : <FaPlay />}
-              </button>
-              <button
-                className='control-button next-button'
-                onClick={playNextTrack}
-                aria-label='Next track'
-              >
-                <FaStepForward />
-              </button>
-            </div>
-            <div className='progress-container'>
-              <span className='time-display'>{formatTime(currentTime)}</span>
-              <div
-                ref={progressBarRef}
-                className='progress-bar'
-                onClick={handleSeek}
-                onMouseDown={handleMouseDown}
-                onTouchStart={handleTouchStart}
-                role='slider'
-                tabIndex={0}
-                aria-label='Progress bar'
-                aria-valuemin={0}
-                aria-valuemax={duration}
-                aria-valuenow={currentTime}
-              >
-                <div
-                  className='progress-filled'
-                  style={{
-                    height: '100%',
-                    width: duration
-                      ? `${(currentTime / duration) * 100}%`
-                      : '0%',
-                  }}
-                />
-                <div
-                  className='progress-handle'
-                  style={{
-                    left: duration
-                      ? `${(currentTime / duration) * 100}%`
-                      : '0%',
-                  }}
-                />
-              </div>
-              <span className='time-display'>{formatTime(duration)}</span>
-            </div>
-            {/* EQUALIZER DISABLED - CAUSING ISSUES ON MOBILE BROWSERS */}
-            {/* {showEqualizer && (
-              <div className='equalizer-container'>
-                <div className='equalizer-header'>
-                  <h5>Equalizer</h5>
-                  <button
-                    className='equalizer-reset-button'
-                    onClick={() => {}}
-                    aria-label='Reset equalizer'
-                  >
-                    Reset
-                  </button>
-                </div>
-                <div className='equalizer-bands'>
-                  {[
-                    { label: '31', index: 0 },
-                    { label: '62', index: 1 },
-                    { label: '125', index: 2 },
-                    { label: '250', index: 3 },
-                    { label: '500', index: 4 },
-                    { label: '1k', index: 5 },
-                    { label: '2k', index: 6 },
-                    { label: '4k', index: 7 },
-                    { label: '8k', index: 8 },
-                    { label: '16k', index: 9 },
-                  ].map(({ label, index }) => (
-                    <div key={index} className='equalizer-band'>
-                      <input
-                        type='range'
-                        min='-12'
-                        max='12'
-                        step='0.5'
-                        value={0}
-                        onChange={() => {}}
-                        className='equalizer-slider'
-                        aria-label={`${label}Hz band`}
-                        orient='vertical'
-                      />
-                      <label className='equalizer-label'>{label}</label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )} */}
-          </div>
-          <audio
-            ref={audioRef}
-            autoPlay={isPlaying}
-            src={currentTrack.fileUrl}
-            onEnded={playNextTrack}
-            onPlay={() => {
-              setIsPlaying(true);
-              // Track listening history when track starts playing (only once per track)
-              if (
-                currentTrack &&
-                currentTrackLoggedRef.current !== currentTrack.id
-              ) {
-                updateListeningHistory(currentTrack);
-                currentTrackLoggedRef.current = currentTrack.id;
-              }
-            }}
-            onPause={() => setIsPlaying(false)}
-            onTimeUpdate={() => {
-              if (audioRef.current && !isDragging) {
-                setCurrentTime(audioRef.current.currentTime);
-              }
-            }}
-            onLoadedMetadata={() => {
-              if (audioRef.current) {
-                setDuration(audioRef.current.duration);
-              }
-            }}
-            onLoadedData={() => {
-              if (audioRef.current) {
-                setDuration(audioRef.current.duration);
-              }
-            }}
-          >
-            Your browser does not support the audio element.
-          </audio>
-        </div>
-      )}
-
-      {!currentTrack && (
-        <div className='fixed-action-bar'>
-          <div className='no-track-selected'>
-            Select a track to play/download
-          </div>
-        </div>
-      )}
+      {/* Always render AudioPlayer here so it persists across view changes */}
+      <AudioPlayer
+        currentTrack={currentTrack}
+        isPlaying={isPlaying}
+        onPlayPause={setIsPlaying}
+        onNext={playNextTrack}
+        onPrevious={playPreviousTrack}
+        currentTime={currentTime}
+        duration={duration}
+        onTimeUpdate={handleTimeUpdate}
+        onDuration={handleDurationUpdate}
+        onDownload={openDownloadModal}
+        playbackSpeed={playbackSpeed}
+        onSpeedChange={cyclePlaybackSpeed}
+        onTrackEnd={playNextTrack}
+        onTrackPlay={track => {
+          // Track listening history when track starts playing (only once per track)
+          if (track && currentTrackLoggedRef.current !== track.id) {
+            updateListeningHistory(track);
+            currentTrackLoggedRef.current = track.id;
+          }
+        }}
+        formatTime={formatTime}
+        enableDownload={true}
+        enableSpeedControl={true}
+        enableEqualizer={false}
+        onAudioRef={handleAudioRef}
+        isMinimized={isPlayerMinimized}
+        onMinimizeToggle={() => setIsPlayerMinimized(!isPlayerMinimized)}
+      />
 
       {/* Theme Selection Modal */}
       {showThemeModal && (
