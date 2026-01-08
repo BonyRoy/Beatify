@@ -1,8 +1,16 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FaArrowLeft, FaHeart, FaRegHeart } from 'react-icons/fa';
+import React, { useState, useEffect, useCallback } from 'react';
+import { FaArrowLeft, FaHeart, FaRegHeart, FaPlay } from 'react-icons/fa';
 import { db } from '../firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 import '../Pages/Play.css';
+import oldMelodiesImg from '../Images/playlistbg/oldmelodies.png';
+import romanticImg from '../Images/playlistbg/romantic.png';
+import partyImg from '../Images/playlistbg/party.png';
+import chillVibesImg from '../Images/playlistbg/chillvibes.png';
+import gymImg from '../Images/playlistbg/gym.png';
+import edmImg from '../Images/playlistbg/edm.png';
+import globalImg from '../Images/playlistbg/Globalmusic.png';
+import tharImg from '../Images/playlistbg/thar.png';
 
 const PlaylistDetail = ({
   playlistName,
@@ -17,11 +25,31 @@ const PlaylistDetail = ({
   // Shared player state from Play.jsx (AudioPlayer rendered by parent)
   currentTrack,
   onPlayTrack,
-  setIsPlayerMinimized,
 }) => {
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const scrollableContentRef = useRef(null);
+
+  // Map playlist names to their background images
+  const playlistImages = {
+    'Old Melodies': oldMelodiesImg,
+    'Romantic Hits': romanticImg,
+    'Party Anthems': partyImg,
+    'Chill Vibes': chillVibesImg,
+    'Workout Mix': gymImg,
+    edm: edmImg,
+    global: globalImg,
+    Thar: tharImg,
+  };
+
+  // Get playlist image
+  const playlistImage = playlistImages[playlistName] || tharImg;
+
+  // Handle play playlist - plays the first track
+  const handlePlayPlaylist = () => {
+    if (tracks.length > 0 && onPlayTrack) {
+      onPlayTrack(tracks[0]);
+    }
+  };
 
   const fetchTracks = useCallback(async () => {
     try {
@@ -53,28 +81,6 @@ const PlaylistDetail = ({
   useEffect(() => {
     fetchTracks();
   }, [fetchTracks]);
-
-  // Scroll detection for minimizing player
-  useEffect(() => {
-    const scrollableElement = scrollableContentRef.current;
-    if (!scrollableElement) return;
-
-    const handleScroll = () => {
-      const { scrollTop } = scrollableElement;
-      // Minimize player when scrolling down (more than 100px)
-      if (scrollTop > 100 && currentTrack && setIsPlayerMinimized) {
-        setIsPlayerMinimized(true);
-      } else if (scrollTop <= 100 && setIsPlayerMinimized) {
-        setIsPlayerMinimized(false);
-      }
-    };
-
-    scrollableElement.addEventListener('scroll', handleScroll);
-
-    return () => {
-      scrollableElement.removeEventListener('scroll', handleScroll);
-    };
-  }, [currentTrack, setIsPlayerMinimized]);
 
   // Wrapper function for playing tracks
   const handlePlayTrack = track => {
@@ -121,7 +127,7 @@ const PlaylistDetail = ({
           onClick={onBack}
           style={{
             position: 'absolute',
-            left: '20px',
+            left: '1px',
             top: '50%',
             transform: 'translateY(-50%)',
             background: 'rgba(255, 255, 255, 0.25)',
@@ -129,8 +135,8 @@ const PlaylistDetail = ({
             WebkitBackdropFilter: 'blur(10px)',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             borderRadius: '50%',
-            width: '40px',
-            height: '40px',
+            width: '38px',
+            height: '38px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -155,8 +161,83 @@ const PlaylistDetail = ({
         <h2>{playlistName}</h2>
       </div>
 
+      {/* Playlist Cover Image */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          position: 'relative',
+        }}
+      >
+        <div
+          style={{
+            width: '200px',
+            height: '200px',
+            borderRadius: '15px',
+            overflow: 'hidden',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+            border: '2px solid rgba(255, 255, 255, 0.3)',
+            position: 'relative',
+          }}
+        >
+          <img
+            src={playlistImage}
+            alt={playlistName}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+          {/* Play button overlay */}
+          {tracks.length > 0 && (
+            <button
+              onClick={handlePlayPlaylist}
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                background: 'rgba(255, 255, 255, 0.9)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '60px',
+                height: '60px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#667eea',
+                fontSize: '1.5rem',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+                zIndex: 10,
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 1)';
+                e.currentTarget.style.transform =
+                  'translate(-50%, -50%) scale(1.1)';
+                e.currentTarget.style.boxShadow =
+                  '0 6px 20px rgba(0, 0, 0, 0.4)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
+                e.currentTarget.style.transform =
+                  'translate(-50%, -50%) scale(1)';
+                e.currentTarget.style.boxShadow =
+                  '0 4px 16px rgba(0, 0, 0, 0.3)';
+              }}
+              aria-label='Play playlist'
+            >
+              <FaPlay style={{ marginLeft: '3px' }} />
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Tracks List */}
-      <div className='scrollable-content' ref={scrollableContentRef}>
+      <div className='scrollable-content'>
         {tracks.length === 0 ? (
           <div className='empty-state'>
             <div className='empty-icon'>

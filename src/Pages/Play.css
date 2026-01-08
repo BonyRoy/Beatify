@@ -573,6 +573,38 @@
   transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
 }
 
+.minimize-player-button {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.minimize-player-button:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.minimize-player-button:active {
+  transform: scale(0.95);
+}
+
 /* Minimized Player */
 .audio-player.minimized {
   bottom: 20px;
@@ -995,6 +1027,10 @@
     font-size: 2rem;
   }
 
+  .play-header h2 {
+    font-size: 1.5rem;
+  }
+
   .music-grid {
     grid-template-columns: 1fr;
     gap: 10px;
@@ -1023,11 +1059,19 @@
   }
 
   .audio-player.minimized {
-    bottom: 10px;
+    bottom: 20px;
     right: 10px;
     max-width: calc(100% - 20px);
     min-width: 180px;
     padding: 10px 14px;
+  }
+
+  .minimize-player-button {
+    top: 10px;
+    left: 10px;
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
   }
 
   .minimized-player-info h4 {
@@ -1058,8 +1102,8 @@
   }
 
   .hamburger-menu-container {
-    top: 16px;
-    right: 16px;
+    top: 8px;
+    right: 7px;
   }
 
   .hamburger-icon {
@@ -1559,6 +1603,10 @@
 
   .play-header h1 {
     font-size: 1.3rem;
+  }
+
+  .play-header h2 {
+    font-size: 1.1rem;
   }
 
   .play-header p {

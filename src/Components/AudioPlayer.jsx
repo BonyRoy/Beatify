@@ -6,6 +6,8 @@ import {
   FaPause,
   FaSlidersH,
   FaDownload,
+  FaChevronDown,
+  FaChevronUp,
 } from 'react-icons/fa';
 import '../Pages/Play.css';
 
@@ -277,6 +279,16 @@ const AudioPlayer = ({
     <div
       className={`audio-player ${showEqualizer ? 'has-equalizer' : ''} ${isMounted ? 'mounted' : ''}`}
     >
+      {onMinimizeToggle && (
+        <button
+          className='minimize-player-button'
+          onClick={onMinimizeToggle}
+          aria-label='Minimize player'
+          title='Minimize player'
+        >
+          <FaChevronDown />
+        </button>
+      )}
       <div className='player-content'>
         <div className='player-info'>
           <div className='player-info-buttons'>

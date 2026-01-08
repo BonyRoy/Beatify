@@ -55,24 +55,13 @@ const playlistTracks = {
   EDM: [],
   Global: [],
   Thar: [
-    '439bb5df-b96d-4e1c-8ef3-e688b1e75edd',
-    '7022381d-b9e9-4ef5-b5a2-ca8e81bd4458',
-    'b1c73dd1-1680-49f0-8f4a-a229469115a3',
-    '91198565-b1e8-422d-84ec-5e915ec6be12',
-    '5192789a-de03-4188-a6a1-95452a78cced',
-    '839df6da-45b7-404b-ae4d-edd5d3cc1a40',
-    '670e7849-d522-4539-ae10-49c7b3841b4e',
-    '94715bab-f9b4-49dd-b4f3-7f76295296cd',
-    '1b3bc69e-594a-4494-af17-11a81e93bcb6',
-    'f2f0eda2-85e5-4e24-bdac-5c25a3f243a7',
-    'bac3a359-fc0d-41aa-86ef-bc81d9dd6544',
-    '9b628a46-d5f0-4062-81a4-704e5b7b82e0',
-    'f27e940c-782d-45ce-866c-aeeec34ee308',
-    '2db89b8c-87cc-4896-8672-db7898cf58d9',
-    '3ab2d91f-985e-4723-b200-4d18cd638a31',
-    'b04aa879-1ad5-4cd1-aa64-bc3dc05ad810',
-    '049d9f80-d940-41c3-800e-e13f8a97f4a1',
-    'a216c924-2ff1-4292-a058-d922f81d5641',
+    '937cf202-b571-4433-97cf-9883d82c87d1',
+    '82427d5d-7ceb-4792-b359-72ea31957458',
+    '2519d158-44f3-485b-9b62-906b843e21f6',
+    'b06464f2-c409-426f-85eb-aeda8c9de721',
+    'c59fd324-9f22-41b0-9e0e-1c88c9a54087',
+    '287ceed9-d87b-44d1-ad6c-a3dd979dbc79',
+    '45b5c009-d3f7-4d9b-bd7c-02f337e216e6',
   ],
 };
 
@@ -542,13 +531,6 @@ const Play = () => {
           );
         }
       }
-
-      // Minimize player when scrolling down (more than 100px)
-      if (scrollTop > 100 && currentTrack) {
-        setIsPlayerMinimized(true);
-      } else if (scrollTop <= 100) {
-        setIsPlayerMinimized(false);
-      }
     };
 
     scrollableElement.addEventListener('scroll', handleScroll);
@@ -556,7 +538,7 @@ const Play = () => {
     return () => {
       scrollableElement.removeEventListener('scroll', handleScroll);
     };
-  }, [displayedTracksCount, filteredMusicList.length, currentTrack]);
+  }, [displayedTracksCount, filteredMusicList.length]);
 
   // Handle audio interruptions (like phone calls)
   useEffect(() => {
@@ -936,8 +918,6 @@ const Play = () => {
           getRandomDanceGif={getRandomDanceGif}
           currentTrack={currentTrack}
           onPlayTrack={playTrack}
-          isPlayerMinimized={isPlayerMinimized}
-          setIsPlayerMinimized={setIsPlayerMinimized}
         />
       ) : (
         <>
