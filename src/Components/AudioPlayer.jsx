@@ -42,6 +42,7 @@ const AudioPlayer = ({
   const progressBarRef = useRef(null);
   const wasDraggingRef = useRef(false);
   const [isMounted, setIsMounted] = useState(false);
+  const savedTimeRef = useRef(0); // Store current playback time
 
   // Expose audio ref to parent component
   useEffect(() => {
@@ -196,6 +197,57 @@ const AudioPlayer = ({
 
   const timeFormatter = formatTime || defaultFormatTime;
 
+  // Preserve playback position when switching views
+  useEffect(() => {
+    if (audioRef.current && currentTrack) {
+      savedTimeRef.current = audioRef.current.currentTime;
+    }
+  }, [isMinimized, currentTrack]);
+
+  // Restore playback position after audio element is recreated
+  useEffect(() => {
+    if (!currentTrack) return;
+
+    const audio = audioRef.current;
+    if (audio && savedTimeRef.current > 0) {
+      // Only restore if we're playing the same track
+      const restoreTime = () => {
+        if (audio && savedTimeRef.current > 0) {
+          audio.currentTime = savedTimeRef.current;
+          savedTimeRef.current = 0; // Reset after restoring
+        }
+      };
+
+      // Try to restore immediately if already loaded
+      if (audio.readyState >= 2) {
+        restoreTime();
+      } else {
+        // Wait for audio to load
+        audio.addEventListener('loadeddata', restoreTime, {
+          once: true,
+        });
+        return () => {
+          if (audio) {
+            audio.removeEventListener('loadeddata', restoreTime);
+          }
+        };
+      }
+    }
+  }, [isMinimized, currentTrack]);
+
+  // Update saved time continuously while playing
+  useEffect(() => {
+    if (!audioRef.current || !isPlaying || !currentTrack) return;
+
+    const interval = setInterval(() => {
+      if (audioRef.current) {
+        savedTimeRef.current = audioRef.current.currentTime;
+      }
+    }, 100); // Update every 100ms
+
+    return () => clearInterval(interval);
+  }, [isPlaying, currentTrack]);
+
   if (!currentTrack) {
     return (
       <div className='fixed-action-bar'>
@@ -203,6 +255,56 @@ const AudioPlayer = ({
       </div>
     );
   }
+
+  // Shared audio element that persists across both views
+  const audioElement = (
+    <audio
+      key={currentTrack?.id} // Key ensures proper remounting when track changes
+      ref={audioRef}
+      autoPlay={isPlaying}
+      src={currentTrack?.fileUrl}
+      onEnded={onTrackEnd}
+      onPlay={() => {
+        if (onPlayPause) {
+          onPlayPause(true);
+        }
+        if (onTrackPlay && currentTrack) {
+          onTrackPlay(currentTrack);
+        }
+      }}
+      onPause={() => {
+        if (onPlayPause) {
+          onPlayPause(false);
+        }
+      }}
+      onTimeUpdate={() => {
+        if (audioRef.current && !isDragging) {
+          const newTime = audioRef.current.currentTime;
+          savedTimeRef.current = newTime; // Keep saved time updated
+          if (onTimeUpdate) {
+            onTimeUpdate(newTime);
+          }
+        }
+      }}
+      onLoadedMetadata={() => {
+        if (audioRef.current && onDuration) {
+          onDuration(audioRef.current.duration);
+        }
+      }}
+      onLoadedData={() => {
+        if (audioRef.current && onDuration) {
+          onDuration(audioRef.current.duration);
+        }
+        // Restore playback position when audio loads
+        if (audioRef.current && savedTimeRef.current > 0) {
+          audioRef.current.currentTime = savedTimeRef.current;
+          savedTimeRef.current = 0;
+        }
+      }}
+    >
+      Your browser does not support the audio element.
+    </audio>
+  );
 
   // Minimized player view
   if (isMinimized) {
@@ -232,45 +334,7 @@ const AudioPlayer = ({
             </button>
           </div>
         </div>
-        <audio
-          ref={audioRef}
-          autoPlay={isPlaying}
-          src={currentTrack.fileUrl}
-          onEnded={onTrackEnd}
-          onPlay={() => {
-            if (onPlayPause) {
-              onPlayPause(true);
-            }
-            if (onTrackPlay) {
-              onTrackPlay(currentTrack);
-            }
-          }}
-          onPause={() => {
-            if (onPlayPause) {
-              onPlayPause(false);
-            }
-          }}
-          onTimeUpdate={() => {
-            if (audioRef.current && !isDragging) {
-              const newTime = audioRef.current.currentTime;
-              if (onTimeUpdate) {
-                onTimeUpdate(newTime);
-              }
-            }
-          }}
-          onLoadedMetadata={() => {
-            if (audioRef.current && onDuration) {
-              onDuration(audioRef.current.duration);
-            }
-          }}
-          onLoadedData={() => {
-            if (audioRef.current && onDuration) {
-              onDuration(audioRef.current.duration);
-            }
-          }}
-        >
-          Your browser does not support the audio element.
-        </audio>
+        {audioElement}
       </div>
     );
   }
@@ -385,45 +449,7 @@ const AudioPlayer = ({
           <span className='time-display'>{timeFormatter(duration)}</span>
         </div>
       </div>
-      <audio
-        ref={audioRef}
-        autoPlay={isPlaying}
-        src={currentTrack.fileUrl}
-        onEnded={onTrackEnd}
-        onPlay={() => {
-          if (onPlayPause) {
-            onPlayPause(true);
-          }
-          if (onTrackPlay) {
-            onTrackPlay(currentTrack);
-          }
-        }}
-        onPause={() => {
-          if (onPlayPause) {
-            onPlayPause(false);
-          }
-        }}
-        onTimeUpdate={() => {
-          if (audioRef.current && !isDragging) {
-            const newTime = audioRef.current.currentTime;
-            if (onTimeUpdate) {
-              onTimeUpdate(newTime);
-            }
-          }
-        }}
-        onLoadedMetadata={() => {
-          if (audioRef.current && onDuration) {
-            onDuration(audioRef.current.duration);
-          }
-        }}
-        onLoadedData={() => {
-          if (audioRef.current && onDuration) {
-            onDuration(audioRef.current.duration);
-          }
-        }}
-      >
-        Your browser does not support the audio element.
-      </audio>
+      {audioElement}
     </div>
   );
 };
