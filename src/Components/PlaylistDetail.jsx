@@ -11,12 +11,15 @@ import gymImg from '../Images/playlistbg/gym.png';
 import edmImg from '../Images/playlistbg/edm.png';
 import globalImg from '../Images/playlistbg/Globalmusic.png';
 import tharImg from '../Images/playlistbg/thar.png';
+import bharatImg from '../Images/playlistbg/bharat.png';
+import indianFlagImg from '../Images/indian-flag.png';
 
 const PlaylistDetail = ({
   playlistName,
   trackIds,
   onBack,
   currentTheme,
+  currentThemeIndex,
   favorites,
   onToggleFavorite,
   formatReleaseDate,
@@ -39,6 +42,7 @@ const PlaylistDetail = ({
     edm: edmImg,
     global: globalImg,
     Thar: tharImg,
+    Bharat: bharatImg,
   };
 
   // Get playlist image
@@ -47,7 +51,7 @@ const PlaylistDetail = ({
   // Handle play playlist - plays the first track
   const handlePlayPlaylist = () => {
     if (tracks.length > 0 && onPlayTrack) {
-      onPlayTrack(tracks[0]);
+      onPlayTrack(tracks[0], tracks);
     }
   };
 
@@ -85,7 +89,7 @@ const PlaylistDetail = ({
   // Wrapper function for playing tracks
   const handlePlayTrack = track => {
     if (onPlayTrack) {
-      onPlayTrack(track);
+      onPlayTrack(track, tracks);
     }
   };
 
@@ -96,10 +100,13 @@ const PlaylistDetail = ({
     }
   };
 
+  // Add Indian flag theme class when theme is Indian flag (index 10)
+  const isIndianFlagTheme = currentThemeIndex === 10;
+
   if (loading) {
     return (
       <div
-        className='play-container'
+        className={`play-container ${isIndianFlagTheme ? 'indian-flag-theme' : ''}`}
         style={{
           background:
             currentTheme || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -115,7 +122,7 @@ const PlaylistDetail = ({
 
   return (
     <div
-      className='play-container'
+      className={`play-container ${isIndianFlagTheme ? 'indian-flag-theme' : ''}`}
       style={{
         background:
           currentTheme || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -127,7 +134,7 @@ const PlaylistDetail = ({
           onClick={onBack}
           style={{
             position: 'absolute',
-            left: '1px',
+            left: '7px',
             top: '50%',
             transform: 'translateY(-50%)',
             background: 'rgba(255, 255, 255, 0.25)',
@@ -135,8 +142,8 @@ const PlaylistDetail = ({
             WebkitBackdropFilter: 'blur(10px)',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             borderRadius: '50%',
-            width: '38px',
-            height: '38px',
+            width: '32px',
+            height: '32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -251,6 +258,7 @@ const PlaylistDetail = ({
             className='music-grid'
             style={{
               paddingBottom: currentTrack ? '68px' : '0px',
+              padding: '4px',
             }}
           >
             {tracks.map((track, index) => (
@@ -262,8 +270,16 @@ const PlaylistDetail = ({
                 <div className='track-content-wrapper'>
                   <div className='track-image-container'>
                     <img
-                      src={getRandomDanceGif?.(index) || ''}
-                      alt='Dancing animation'
+                      src={
+                        playlistName === 'Bharat'
+                          ? indianFlagImg
+                          : getRandomDanceGif?.(index) || ''
+                      }
+                      alt={
+                        playlistName === 'Bharat'
+                          ? 'Indian Flag'
+                          : 'Dancing animation'
+                      }
                     />
                   </div>
                   <div className='track-info-wrapper'>

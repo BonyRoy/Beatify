@@ -25,6 +25,7 @@ import dance3 from '../Images/dance3.gif';
 import dance4 from '../Images/dance4.gif';
 import dance5 from '../Images/dance5.gif';
 import dance6 from '../Images/dance6.gif';
+import indianFlagImg from '../Images/playlistbg/bharat.png';
 import './Play.css';
 import Artists from '../Components/Artists';
 import Playlists from '../Components/Playlists';
@@ -43,10 +44,18 @@ const THEMES = [
   'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', // Peach
   'linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%)', // Red-Blue
   'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)', // Lavender-Blue
+  'linear-gradient(180deg, #FF9933 0%, #FF9933 33%,rgb(152, 152, 152) 33%,rgb(255, 255, 255) 66%, #138808 66%, #138808 100%)', // Indian Flag (Saffron-Dark Gray-Green)
 ];
 
 // Hardcoded playlist track mappings
 const playlistTracks = {
+  Bharat: [
+    '32d36fc7-d69a-4217-b004-baf9412988ec',
+    '1cd9f324-4f86-4814-a04e-ec8f30bf287d',
+    '5855e5dd-b061-45f4-8a73-f53485f41181',
+    '9b8a6e98-ae82-449e-a526-284561ee605e',
+    '318ccac8-c78e-4541-97f4-674fb594d977',
+  ],
   'Old Melodies': [],
   'Romantic Hits': [],
   'Party Anthems': [],
@@ -88,6 +97,7 @@ const Play = () => {
   const [showPlaylists, setShowPlaylists] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(0);
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
+  const [activePlaylistTracks, setActivePlaylistTracks] = useState(null); // Track active playlist tracks for repeat
   const shouldAutoResumeRef = useRef(false); // Track if we should auto-resume after interruption
   const [displayedTracksCount, setDisplayedTracksCount] = useState(10); // Lazy loading: start with 10 tracks
   const scrollableContentRef = useRef(null); // Ref for scrollable content container
@@ -96,6 +106,8 @@ const Play = () => {
   const [showDownloadModal, setShowDownloadModal] = useState(false); // Track download modal visibility
   const [playbackSpeed, setPlaybackSpeed] = useState(1); // Track playback speed
   const [isPlayerMinimized, setIsPlayerMinimized] = useState(false); // Track if player is minimized
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false); // Track welcome modal visibility
+  const [welcomeModalProgress, setWelcomeModalProgress] = useState(0); // Progress bar for welcome modal
   // EQUALIZER DISABLED - COMMENTED OUT REFS
   // const audioContextRef = useRef(null); // Web Audio API context
   // const sourceNodeRef = useRef(null); // Audio source node
@@ -168,7 +180,43 @@ const Play = () => {
         console.error('Error loading theme:', error);
       }
     }
+
+    // Show welcome modal on every page load/reload
+    setShowWelcomeModal(true);
   }, []);
+
+  // Handle welcome modal countdown and progress
+  useEffect(() => {
+    if (!showWelcomeModal) return;
+
+    const duration = 10000; // 10 seconds
+    const interval = 100; // Update every 100ms for smooth progress
+    const steps = duration / interval;
+    let currentStep = 0;
+
+    const progressInterval = setInterval(() => {
+      currentStep++;
+      const progress = (currentStep / steps) * 100;
+      setWelcomeModalProgress(progress);
+
+      if (currentStep >= steps) {
+        clearInterval(progressInterval);
+        setShowWelcomeModal(false);
+      }
+    }, interval);
+
+    return () => clearInterval(progressInterval);
+  }, [showWelcomeModal]);
+
+  // Handle navigation to Bharat playlist
+  const handleGoToBharatPlaylist = () => {
+    setShowWelcomeModal(false);
+    setShowPlaylists(true);
+    setSelectedPlaylist('Bharat');
+    // Automatically set Indian flag theme when Bharat playlist is selected
+    setCurrentTheme(10);
+    localStorage.setItem('beatifyTheme', '10');
+  };
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -350,11 +398,13 @@ const Play = () => {
   }, [equalizerGains]);
   */
 
-  const playTrack = track => {
+  const playTrack = (track, playlistTracksList = null) => {
     setCurrentTrack(track);
     setIsPlaying(true);
     setCurrentTime(0);
     setDuration(0);
+    // Set active playlist tracks if provided (for playlist repeat mode)
+    setActivePlaylistTracks(playlistTracksList);
     // Reset logged flag for new track
     currentTrackLoggedRef.current = null;
   };
@@ -383,18 +433,23 @@ const Play = () => {
   */
 
   const playNextTrack = useCallback(() => {
-    if (!currentTrack || filteredMusicList.length === 0) return;
+    if (!currentTrack) return;
 
-    // Find current track index in filteredMusicList
-    const currentIndex = filteredMusicList.findIndex(
+    // Use active playlist tracks if available, otherwise use filteredMusicList
+    const tracksToUse = activePlaylistTracks || filteredMusicList;
+
+    if (tracksToUse.length === 0) return;
+
+    // Find current track index in tracksToUse
+    const currentIndex = tracksToUse.findIndex(
       track => track.id === currentTrack.id
     );
 
     if (currentIndex === -1) return;
 
     // Get next track index (loop to first if last)
-    const nextIndex = (currentIndex + 1) % filteredMusicList.length;
-    const nextTrack = filteredMusicList[nextIndex];
+    const nextIndex = (currentIndex + 1) % tracksToUse.length;
+    const nextTrack = tracksToUse[nextIndex];
 
     // Play next track
     setCurrentTrack(nextTrack);
@@ -402,13 +457,18 @@ const Play = () => {
     setCurrentTime(0);
     // Reset logged flag for new track
     currentTrackLoggedRef.current = null;
-  }, [currentTrack, filteredMusicList]);
+  }, [currentTrack, filteredMusicList, activePlaylistTracks]);
 
   const playPreviousTrack = useCallback(() => {
-    if (!currentTrack || filteredMusicList.length === 0) return;
+    if (!currentTrack) return;
 
-    // Find current track index in filteredMusicList
-    const currentIndex = filteredMusicList.findIndex(
+    // Use active playlist tracks if available, otherwise use filteredMusicList
+    const tracksToUse = activePlaylistTracks || filteredMusicList;
+
+    if (tracksToUse.length === 0) return;
+
+    // Find current track index in tracksToUse
+    const currentIndex = tracksToUse.findIndex(
       track => track.id === currentTrack.id
     );
 
@@ -416,8 +476,8 @@ const Play = () => {
 
     // Get previous track (loop to last if first)
     const prevIndex =
-      currentIndex === 0 ? filteredMusicList.length - 1 : currentIndex - 1;
-    const prevTrack = filteredMusicList[prevIndex];
+      currentIndex === 0 ? tracksToUse.length - 1 : currentIndex - 1;
+    const prevTrack = tracksToUse[prevIndex];
 
     // Play previous track
     setCurrentTrack(prevTrack);
@@ -425,7 +485,7 @@ const Play = () => {
     setCurrentTime(0);
     // Reset logged flag for new track
     currentTrackLoggedRef.current = null;
-  }, [currentTrack, filteredMusicList]);
+  }, [currentTrack, filteredMusicList, activePlaylistTracks]);
 
   // Media Session API for notification center player
   useEffect(() => {
@@ -902,15 +962,19 @@ const Play = () => {
 
   return (
     <div
-      className='play-container'
+      className={`play-container ${currentTheme === 10 ? 'indian-flag-theme' : ''}`}
       style={{ background: THEMES[currentTheme] }}
     >
       {showPlaylistDetail ? (
         <PlaylistDetail
           playlistName={selectedPlaylist}
           trackIds={playlistTracks[selectedPlaylist]}
-          onBack={() => setSelectedPlaylist(null)}
+          onBack={() => {
+            setSelectedPlaylist(null);
+            setActivePlaylistTracks(null); // Clear active playlist when going back
+          }}
           currentTheme={THEMES[currentTheme]}
+          currentThemeIndex={currentTheme}
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
           formatReleaseDate={formatReleaseDate}
@@ -1069,6 +1133,11 @@ const Play = () => {
                 currentTrack={currentTrack}
                 onPlaylistClick={playlistName => {
                   setSelectedPlaylist(playlistName);
+                  // Automatically set Indian flag theme when Bharat playlist is selected
+                  if (playlistName === 'Bharat') {
+                    setCurrentTheme(10);
+                    localStorage.setItem('beatifyTheme', '10');
+                  }
                 }}
                 selectedPlaylist={selectedPlaylist}
               />
@@ -1154,6 +1223,7 @@ const Play = () => {
                     className='music-grid'
                     style={{
                       paddingBottom: currentTrack ? '68px' : '0px',
+                      padding: '4px',
                     }}
                   >
                     {filteredMusicList
@@ -1682,6 +1752,166 @@ const Play = () => {
                 <FaDownload />
                 Download
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Welcome Modal - Bharat Playlist Promotion */}
+      {showWelcomeModal && (
+        <div
+          className='welcome-modal-overlay'
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10001,
+          }}
+        >
+          <div
+            className='welcome-modal'
+            onClick={e => e.stopPropagation()}
+            style={{
+              backgroundImage: `url(${indianFlagImg})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderRadius: '20px',
+              padding: '40px',
+              maxWidth: '500px',
+              width: '90%',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+              position: 'relative',
+              textAlign: 'center',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowWelcomeModal(false)}
+              aria-label='Close welcome modal'
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'rgba(0, 0, 0, 0.5)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'white',
+                fontSize: '18px',
+                transition: 'all 0.3s ease',
+                zIndex: 3,
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+              }}
+              onMouseEnter={e => {
+                e.target.style.background = 'rgba(0, 0, 0, 0.7)';
+                e.target.style.transform = 'scale(1.1) rotate(90deg)';
+              }}
+              onMouseLeave={e => {
+                e.target.style.background = 'rgba(0, 0, 0, 0.5)';
+                e.target.style.transform = 'scale(1) rotate(0deg)';
+              }}
+            >
+              <FaTimes />
+            </button>
+
+            {/* Content wrapper */}
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <h2
+                style={{
+                  color: 'white',
+                  margin: '0 0 15px 0',
+                  fontSize: '28px',
+                  fontWeight: 'bold',
+                  textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+                }}
+              >
+                Feel the Spirit of Patriotism!
+              </h2>
+              <button
+                onClick={handleGoToBharatPlaylist}
+                style={{
+                  background: 'black',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '15px 30px',
+                  color: 'white',
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                  width: '100%',
+                }}
+                onMouseEnter={e => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow =
+                    '0 6px 20px rgba(102, 126, 234, 0.6)';
+                }}
+                onMouseLeave={e => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow =
+                    '0 4px 15px rgba(102, 126, 234, 0.4)';
+                }}
+              >
+                Explore the new “Bharat” Playlist
+              </button>
+              {/* <p
+                style={{
+                  color: '#666',
+                  fontSize: '14px',
+                  margin: '15px 0 0 0',
+                  opacity: 0.8,
+                }}
+              >
+                Auto-closing in {Math.ceil((100 - welcomeModalProgress) / 10)}s
+              </p> */}
+            </div>
+
+            {/* Progress Bar */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: '8px',
+                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                borderRadius: '0 0 20px 20px',
+                overflow: 'hidden',
+                zIndex: 2,
+              }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  width: `${welcomeModalProgress}%`,
+                  background:
+                    'linear-gradient(90deg, #FF9933 0%, #000080 50%, #138808 100%)',
+                  transition: 'width 0.1s linear',
+                  borderRadius:
+                    welcomeModalProgress === 100 ? '0 0 20px 0' : '0',
+                }}
+              />
             </div>
           </div>
         </div>

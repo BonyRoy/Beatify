@@ -42,7 +42,6 @@ const AudioPlayer = ({
   const progressBarRef = useRef(null);
   const wasDraggingRef = useRef(false);
   const [isMounted, setIsMounted] = useState(false);
-  const savedTimeRef = useRef(0); // Store current playback time
 
   // Expose audio ref to parent component
   useEffect(() => {
@@ -197,57 +196,6 @@ const AudioPlayer = ({
 
   const timeFormatter = formatTime || defaultFormatTime;
 
-  // Preserve playback position when switching views
-  useEffect(() => {
-    if (audioRef.current && currentTrack) {
-      savedTimeRef.current = audioRef.current.currentTime;
-    }
-  }, [isMinimized, currentTrack]);
-
-  // Restore playback position after audio element is recreated
-  useEffect(() => {
-    if (!currentTrack) return;
-
-    const audio = audioRef.current;
-    if (audio && savedTimeRef.current > 0) {
-      // Only restore if we're playing the same track
-      const restoreTime = () => {
-        if (audio && savedTimeRef.current > 0) {
-          audio.currentTime = savedTimeRef.current;
-          savedTimeRef.current = 0; // Reset after restoring
-        }
-      };
-
-      // Try to restore immediately if already loaded
-      if (audio.readyState >= 2) {
-        restoreTime();
-      } else {
-        // Wait for audio to load
-        audio.addEventListener('loadeddata', restoreTime, {
-          once: true,
-        });
-        return () => {
-          if (audio) {
-            audio.removeEventListener('loadeddata', restoreTime);
-          }
-        };
-      }
-    }
-  }, [isMinimized, currentTrack]);
-
-  // Update saved time continuously while playing
-  useEffect(() => {
-    if (!audioRef.current || !isPlaying || !currentTrack) return;
-
-    const interval = setInterval(() => {
-      if (audioRef.current) {
-        savedTimeRef.current = audioRef.current.currentTime;
-      }
-    }, 100); // Update every 100ms
-
-    return () => clearInterval(interval);
-  }, [isPlaying, currentTrack]);
-
   if (!currentTrack) {
     return (
       <div className='fixed-action-bar'>
@@ -256,19 +204,19 @@ const AudioPlayer = ({
     );
   }
 
-  // Shared audio element that persists across both views
+  // Single persistent audio element - rendered once and reused
   const audioElement = (
     <audio
-      key={currentTrack?.id} // Key ensures proper remounting when track changes
+      key={currentTrack.id} // Only remount when track changes, not when view changes
       ref={audioRef}
       autoPlay={isPlaying}
-      src={currentTrack?.fileUrl}
+      src={currentTrack.fileUrl}
       onEnded={onTrackEnd}
       onPlay={() => {
         if (onPlayPause) {
           onPlayPause(true);
         }
-        if (onTrackPlay && currentTrack) {
+        if (onTrackPlay) {
           onTrackPlay(currentTrack);
         }
       }}
@@ -280,7 +228,6 @@ const AudioPlayer = ({
       onTimeUpdate={() => {
         if (audioRef.current && !isDragging) {
           const newTime = audioRef.current.currentTime;
-          savedTimeRef.current = newTime; // Keep saved time updated
           if (onTimeUpdate) {
             onTimeUpdate(newTime);
           }
@@ -295,11 +242,6 @@ const AudioPlayer = ({
         if (audioRef.current && onDuration) {
           onDuration(audioRef.current.duration);
         }
-        // Restore playback position when audio loads
-        if (audioRef.current && savedTimeRef.current > 0) {
-          audioRef.current.currentTime = savedTimeRef.current;
-          savedTimeRef.current = 0;
-        }
       }}
     >
       Your browser does not support the audio element.
@@ -309,148 +251,152 @@ const AudioPlayer = ({
   // Minimized player view
   if (isMinimized) {
     return (
-      <div
-        className={`audio-player minimized ${isMounted ? 'mounted' : ''}`}
-        onClick={onMinimizeToggle}
-        style={{ cursor: 'pointer' }}
-      >
-        <div className='minimized-player-content'>
-          <div className='minimized-player-info'>
-            <h4>{currentTrack.name}</h4>
-            <p>
-              {currentTrack.artist} - {currentTrack.album}
-            </p>
-          </div>
-          <div className='minimized-player-controls'>
-            <button
-              className='control-button minimized-play-pause'
-              onClick={e => {
-                e.stopPropagation();
-                handlePlayPause();
-              }}
-              aria-label={isPlaying ? 'Pause' : 'Play'}
-            >
-              {isPlaying ? <FaPause /> : <FaPlay />}
-            </button>
+      <>
+        <div
+          className={`audio-player minimized ${isMounted ? 'mounted' : ''}`}
+          onClick={onMinimizeToggle}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className='minimized-player-content'>
+            <div className='minimized-player-info'>
+              <h4>{currentTrack.name}</h4>
+              <p>
+                {currentTrack.artist} - {currentTrack.album}
+              </p>
+            </div>
+            <div className='minimized-player-controls'>
+              <button
+                className='control-button minimized-play-pause'
+                onClick={e => {
+                  e.stopPropagation();
+                  handlePlayPause();
+                }}
+                aria-label={isPlaying ? 'Pause' : 'Play'}
+              >
+                {isPlaying ? <FaPause /> : <FaPlay />}
+              </button>
+            </div>
           </div>
         </div>
         {audioElement}
-      </div>
+      </>
     );
   }
 
   return (
-    <div
-      className={`audio-player ${showEqualizer ? 'has-equalizer' : ''} ${isMounted ? 'mounted' : ''}`}
-    >
-      {onMinimizeToggle && (
-        <button
-          className='minimize-player-button'
-          onClick={onMinimizeToggle}
-          aria-label='Minimize player'
-          title='Minimize player'
-        >
-          <FaChevronDown />
-        </button>
-      )}
-      <div className='player-content'>
-        <div className='player-info'>
-          <div className='player-info-buttons'>
-            {enableEqualizer && (
-              <button
-                className={`equalizer-toggle-button ${showEqualizer ? 'active' : ''}`}
-                onClick={onToggleEqualizer}
-                aria-label='Toggle equalizer'
-                disabled
-                style={{ opacity: 0.5, cursor: 'not-allowed' }}
-              >
-                <FaSlidersH />
-              </button>
-            )}
-            {enableDownload && onDownload && (
-              <button
-                className='download-track-button'
-                onClick={onDownload}
-                aria-label='Download track'
-              >
-                <FaDownload />
-              </button>
-            )}
-            {enableSpeedControl && onSpeedChange && (
-              <button
-                className='speed-button-top'
-                onClick={onSpeedChange}
-                aria-label={`Playback speed: ${playbackSpeed}x`}
-                title={`Playback speed: ${playbackSpeed}x`}
-              >
-                {playbackSpeed}x
-              </button>
-            )}
+    <>
+      <div
+        className={`audio-player ${showEqualizer ? 'has-equalizer' : ''} ${isMounted ? 'mounted' : ''}`}
+      >
+        {onMinimizeToggle && (
+          <button
+            className='minimize-player-button'
+            onClick={onMinimizeToggle}
+            aria-label='Minimize player'
+            title='Minimize player'
+          >
+            <FaChevronDown />
+          </button>
+        )}
+        <div className='player-content'>
+          <div className='player-info'>
+            <div className='player-info-buttons'>
+              {enableEqualizer && (
+                <button
+                  className={`equalizer-toggle-button ${showEqualizer ? 'active' : ''}`}
+                  onClick={onToggleEqualizer}
+                  aria-label='Toggle equalizer'
+                  disabled
+                  style={{ opacity: 0.5, cursor: 'not-allowed' }}
+                >
+                  <FaSlidersH />
+                </button>
+              )}
+              {enableDownload && onDownload && (
+                <button
+                  className='download-track-button'
+                  onClick={onDownload}
+                  aria-label='Download track'
+                >
+                  <FaDownload />
+                </button>
+              )}
+              {enableSpeedControl && onSpeedChange && (
+                <button
+                  className='speed-button-top'
+                  onClick={onSpeedChange}
+                  aria-label={`Playback speed: ${playbackSpeed}x`}
+                  title={`Playback speed: ${playbackSpeed}x`}
+                >
+                  {playbackSpeed}x
+                </button>
+              )}
+            </div>
+            <div className='player-info-text'>
+              <h4>{currentTrack.name}</h4>
+              <p>
+                {currentTrack.artist} - {currentTrack.album}
+              </p>
+            </div>
           </div>
-          <div className='player-info-text'>
-            <h4>{currentTrack.name}</h4>
-            <p>
-              {currentTrack.artist} - {currentTrack.album}
-            </p>
+          <div className='player-controls'>
+            <button
+              className='control-button prev-button'
+              onClick={onPrevious}
+              aria-label='Previous track'
+            >
+              <FaStepBackward />
+            </button>
+            <button
+              className='control-button play-pause-button'
+              onClick={handlePlayPause}
+              aria-label={isPlaying ? 'Pause' : 'Play'}
+            >
+              {isPlaying ? <FaPause /> : <FaPlay />}
+            </button>
+            <button
+              className='control-button next-button'
+              onClick={onNext}
+              aria-label='Next track'
+            >
+              <FaStepForward />
+            </button>
           </div>
-        </div>
-        <div className='player-controls'>
-          <button
-            className='control-button prev-button'
-            onClick={onPrevious}
-            aria-label='Previous track'
-          >
-            <FaStepBackward />
-          </button>
-          <button
-            className='control-button play-pause-button'
-            onClick={handlePlayPause}
-            aria-label={isPlaying ? 'Pause' : 'Play'}
-          >
-            {isPlaying ? <FaPause /> : <FaPlay />}
-          </button>
-          <button
-            className='control-button next-button'
-            onClick={onNext}
-            aria-label='Next track'
-          >
-            <FaStepForward />
-          </button>
-        </div>
-        <div className='progress-container'>
-          <span className='time-display'>{timeFormatter(currentTime)}</span>
-          <div
-            ref={progressBarRef}
-            className='progress-bar'
-            onClick={handleSeek}
-            onMouseDown={handleMouseDown}
-            onTouchStart={handleTouchStart}
-            role='slider'
-            tabIndex={0}
-            aria-label='Progress bar'
-            aria-valuemin={0}
-            aria-valuemax={duration}
-            aria-valuenow={currentTime}
-          >
+          <div className='progress-container'>
+            <span className='time-display'>{timeFormatter(currentTime)}</span>
             <div
-              className='progress-filled'
-              style={{
-                height: '100%',
-                width: duration ? `${(currentTime / duration) * 100}%` : '0%',
-              }}
-            />
-            <div
-              className='progress-handle'
-              style={{
-                left: duration ? `${(currentTime / duration) * 100}%` : '0%',
-              }}
-            />
+              ref={progressBarRef}
+              className='progress-bar'
+              onClick={handleSeek}
+              onMouseDown={handleMouseDown}
+              onTouchStart={handleTouchStart}
+              role='slider'
+              tabIndex={0}
+              aria-label='Progress bar'
+              aria-valuemin={0}
+              aria-valuemax={duration}
+              aria-valuenow={currentTime}
+            >
+              <div
+                className='progress-filled'
+                style={{
+                  height: '100%',
+                  width: duration ? `${(currentTime / duration) * 100}%` : '0%',
+                }}
+              />
+              <div
+                className='progress-handle'
+                style={{
+                  left: duration ? `${(currentTime / duration) * 100}%` : '0%',
+                }}
+              />
+            </div>
+            <span className='time-display'>{timeFormatter(duration)}</span>
           </div>
-          <span className='time-display'>{timeFormatter(duration)}</span>
         </div>
       </div>
       {audioElement}
-    </div>
+    </>
   );
 };
 

@@ -8,6 +8,7 @@ import gymImg from '../Images/playlistbg/gym.png';
 import edmImg from '../Images/playlistbg/edm.png';
 import globalImg from '../Images/playlistbg/Globalmusic.png';
 import tharImg from '../Images/playlistbg/thar.png';
+import bharatImg from '../Images/playlistbg/bharat.png';
 
 const Playlists = ({
   searchQuery = '',
@@ -19,6 +20,8 @@ const Playlists = ({
   selectedPlaylist = null,
 }) => {
   const playlists = [
+    'Bharat',
+    'Thar',
     'Old Melodies',
     'Romantic Hits',
     'Party Anthems',
@@ -26,7 +29,6 @@ const Playlists = ({
     'Workout Mix',
     'edm',
     'global',
-    'Thar',
   ];
 
   // Map playlist names to their background images
@@ -39,6 +41,7 @@ const Playlists = ({
     edm: edmImg,
     global: globalImg,
     Thar: tharImg,
+    Bharat: bharatImg,
   };
 
   // Filter playlists based on favorites first, then search query
@@ -107,7 +110,7 @@ const Playlists = ({
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-            ${currentTrack ? 'padding-bottom: 148px !important;' : 'padding-bottom: 48px !important;'}
+            ${currentTrack ? 'padding-bottom: 148px !important;' : 'padding-bottom: 68px !important;'}
           }
           
           @media (min-width: 768px) {
@@ -122,7 +125,8 @@ const Playlists = ({
           display: 'flex',
           overflowX: 'auto',
           width: '100%',
-          marginTop: '20px',
+          // marginTop: '20px',
+          padding: '4px',
         }}
       >
         <div className='playlists-container' style={{ width: '100%' }}>
