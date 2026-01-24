@@ -37,6 +37,65 @@
   box-shadow: 0 0 0 2px rgba(0, 0, 128, 0.3);
 }
 
+/* Hearts Pattern for Valentine's Day Theme */
+.play-container.valentines-theme {
+  position: relative;
+  overflow: hidden;
+}
+
+.play-container.valentines-theme::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cpath d='M40 30c-5-8-15-8-20 0-5 8 0 15 20 25 20-10 25-17 20-25-5-8-15-8-20 0z' fill='white'/%3E%3C/svg%3E");
+  background-size: 80px 80px;
+  background-position: 0 0;
+  background-repeat: repeat;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.25;
+  animation: heartsFloat 20s ease-in-out infinite;
+}
+
+.play-container.valentines-theme::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cpath d='M40 30c-5-8-15-8-20 0-5 8 0 15 20 25 20-10 25-17 20-25-5-8-15-8-20 0z' fill='white'/%3E%3C/svg%3E");
+  background-size: 80px 80px;
+  background-position: 40px 40px;
+  background-repeat: repeat;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.2;
+  animation: heartsFloat 25s ease-in-out infinite reverse;
+}
+
+@keyframes heartsFloat {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.2;
+  }
+  25% {
+    transform: translateY(-5px) translateX(3px);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(-3px) translateX(-3px);
+    opacity: 0.22;
+  }
+  75% {
+    transform: translateY(-4px) translateX(2px);
+    opacity: 0.25;
+  }
+}
+
 .play-header {
   text-align: center;
   margin-bottom: 10px;

@@ -34,7 +34,7 @@ import AudioPlayer from '../Components/AudioPlayer';
 
 // Theme gradients array
 const THEMES = [
-  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Purple-Violet
+  'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)', // Black Theme
   'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', // Pink-Red
   'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', // Green-Cyan
   'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', // Pink-Yellow
@@ -45,6 +45,7 @@ const THEMES = [
   'linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%)', // Red-Blue
   'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)', // Lavender-Blue
   'linear-gradient(180deg, #FF9933 0%, #FF9933 33%,rgb(152, 152, 152) 33%,rgb(255, 255, 255) 66%, #138808 66%, #138808 100%)', // Indian Flag (Saffron-Dark Gray-Green)
+  'linear-gradient(135deg, #E55A9F 0%, #E5A0AD 25%, #C88BC8 50%, #E5CBC8 75%, #9BC4D1 100%)', // Valentine's Day Theme (Pink with Hearts)
 ];
 
 // Hardcoded playlist track mappings
@@ -962,7 +963,7 @@ const Play = () => {
 
   return (
     <div
-      className={`play-container ${currentTheme === 10 ? 'indian-flag-theme' : ''}`}
+      className={`play-container ${currentTheme === 10 ? 'indian-flag-theme' : ''} ${currentTheme === 11 ? 'valentines-theme' : ''}`}
       style={{ background: THEMES[currentTheme] }}
     >
       {showPlaylistDetail ? (
