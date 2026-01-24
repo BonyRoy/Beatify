@@ -182,8 +182,16 @@ const Play = () => {
       }
     }
 
-    // Show welcome modal on every page load/reload
-    setShowWelcomeModal(true);
+    // Show welcome modal on every page load/reload, but only until January 26th
+    // On January 27th and after, don't show the modal
+    const today = new Date();
+    const month = today.getMonth(); // 0-11 (January = 0)
+    const day = today.getDate(); // 1-31
+    
+    // Show modal only if it's before January 27th (i.e., January 1-26)
+    if (month === 0 && day <= 26) {
+      setShowWelcomeModal(true);
+    }
   }, []);
 
   // Handle welcome modal countdown and progress
