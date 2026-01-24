@@ -36,12 +36,12 @@ import AudioPlayer from '../Components/AudioPlayer';
 const THEMES = [
   'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)', // Black Theme
   'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', // Pink-Red
-  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', // Green-Cyan
-  'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', // Pink-Yellow
+  'linear-gradient(135deg, #2db863 0%, #2ad1b8 100%)', // Green-Cyan
+  'linear-gradient(135deg, #dc143c 0%, #ef4444 12%, #b91c3c 25%, #a91d2e 37%, #991b2e 50%, #8b1a2a 62%, #7f1d1d 75%, #722f37 87%, #800020 100%)', // Red-Maroon
   'linear-gradient(135deg, #30cfd0 0%, #330867 100%)', // Cyan-Purple
-  'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', // Mint-Pink
+  'linear-gradient(135deg, #88cdca 0%, #deb6c3 100%)', // Mint-Pink
   'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', // Coral-Pink
-  'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', // Peach
+  'linear-gradient(135deg, #dfccb2 0%, #dc968f 100%)', // Peach
   'linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%)', // Red-Blue
   'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)', // Lavender-Blue
   'linear-gradient(180deg, #FF9933 0%, #FF9933 33%,rgb(152, 152, 152) 33%,rgb(255, 255, 255) 66%, #138808 66%, #138808 100%)', // Indian Flag (Saffron-Dark Gray-Green)
