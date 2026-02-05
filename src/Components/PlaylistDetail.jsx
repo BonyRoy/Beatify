@@ -12,6 +12,8 @@ import edmImg from '../Images/playlistbg/edm.png';
 import globalImg from '../Images/playlistbg/Globalmusic.png';
 import tharImg from '../Images/playlistbg/thar.png';
 import bharatImg from '../Images/playlistbg/bharat.png';
+import valentineImg from '../Images/playlistbg/valentine.png';
+import holiImg from '../Images/playlistbg/holi.png';
 import indianFlagImg from '../Images/indian-flag.png';
 
 const PlaylistDetail = ({
@@ -43,6 +45,8 @@ const PlaylistDetail = ({
     global: globalImg,
     Thar: tharImg,
     Bharat: bharatImg,
+    Valentine: valentineImg,
+    Holi: holiImg,
   };
 
   // Get playlist image

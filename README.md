@@ -13,6 +13,7 @@ A modern React application for uploading and managing music files with Firebase 
 - ✅ **Form Validation**: Client-side validation for all required fields
 - 🧭 **Navigation**: Easy switching between Play and Admin pages
 - 📱 **Mobile Friendly**: Fully responsive design for all devices
+- 🎉 **Promotional Campaigns**: Configurable date-based promotional modals with custom themes and playlists
 
 ## 🚀 Quick Start
 
@@ -118,18 +119,19 @@ Alternatively, update `src/firebase/config.js` directly with your Firebase proje
 beatify/
 ├── src/
 │   ├── Pages/
-│   │   ├── Admin.jsx          # Admin upload page (/admin)
-│   │   ├── Admin.css          # Admin page styles
-│   │   ├── Play.jsx           # Music player page (/play)
-│   │   └── Play.css           # Play page styles
+│   │   ├── Admin.jsx                    # Admin upload page (/admin)
+│   │   ├── Admin.css                    # Admin page styles
+│   │   ├── Play.jsx                     # Music player page (/play)
+│   │   └── Play.css                     # Play page styles
 │   ├── firebase/
-│   │   └── config.js          # Firebase configuration
-│   ├── App.jsx                # Main app with routing
-│   ├── App.css                # Navigation and layout styles
-│   └── main.jsx               # App entry point
-├── public/                    # Static assets
-├── FIREBASE_SETUP_GUIDE.md    # Detailed Firebase setup
-└── README.md                  # This file
+│   │   └── config.js                    # Firebase configuration
+│   ├── App.jsx                          # Main app with routing
+│   ├── App.css                          # Navigation and layout styles
+│   └── main.jsx                         # App entry point
+├── public/                              # Static assets
+├── FIREBASE_SETUP_GUIDE.md              # Detailed Firebase setup
+├── PROMOTIONAL_CAMPAIGNS_GUIDE.md       # Promotional campaigns guide
+└── README.md                            # This file
 ```
 
 ## 🎨 Customization
@@ -142,6 +144,35 @@ Edit the arrays in `src/Pages/Admin.jsx`:
 const genres = ['Pop', 'Rock', 'Hip Hop' /* add more */];
 const artists = ['Taylor Swift', 'Drake' /* add more */];
 ```
+
+### Promotional Campaigns
+
+Create time-based promotional campaigns with custom themes and backgrounds! Perfect for festivals, holidays, or special events.
+
+**See [PROMOTIONAL_CAMPAIGNS_GUIDE.md](./PROMOTIONAL_CAMPAIGNS_GUIDE.md) for detailed instructions.**
+
+Quick example:
+```javascript
+{
+  id: 'valentines-day',
+  startDate: '2026-02-10',
+  endDate: '2026-02-14',
+  backgroundImage: valentineBgImg,
+  playlistName: 'Romantic Hits',
+  themeIndex: 11,
+  title: 'Celebrate Love! ❤️',
+  buttonText: 'Explore Romantic Playlist',
+  autoCloseDuration: 8000,
+}
+```
+
+Features:
+- 📅 Date-range based display
+- 🖼️ Custom background images
+- 🎨 Automatic theme switching
+- 🎵 Direct playlist navigation
+- ⏱️ Auto-close with countdown
+- 🔄 Multiple campaigns support
 
 ### Styling
 

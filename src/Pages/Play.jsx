@@ -26,6 +26,8 @@ import dance4 from '../Images/dance4.gif';
 import dance5 from '../Images/dance5.gif';
 import dance6 from '../Images/dance6.gif';
 import indianFlagImg from '../Images/playlistbg/bharat.png';
+import valentineImg from '../Images/playlistbg/valentine.png';
+import holiImg from '../Images/playlistbg/holi.png';
 import './Play.css';
 import Artists from '../Components/Artists';
 import Playlists from '../Components/Playlists';
@@ -34,7 +36,7 @@ import AudioPlayer from '../Components/AudioPlayer';
 
 // Theme gradients array
 const THEMES = [
-  'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)', // Black Theme
+  'linear-gradient(135deg,rgb(0, 0, 0) 0%,rgb(63, 60, 60) 100%)', // Black Theme
   'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', // Pink-Red
   'linear-gradient(135deg, #2db863 0%, #2ad1b8 100%)', // Green-Cyan
   'linear-gradient(135deg, #dc143c 0%, #ef4444 12%, #b91c3c 25%, #a91d2e 37%, #991b2e 50%, #8b1a2a 62%, #7f1d1d 75%, #722f37 87%, #800020 100%)', // Red-Maroon
@@ -45,12 +47,22 @@ const THEMES = [
   'linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%)', // Red-Blue
   'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)', // Lavender-Blue
   'linear-gradient(180deg, #FF9933 0%, #FF9933 33%,rgb(152, 152, 152) 33%,rgb(255, 255, 255) 66%, #138808 66%, #138808 100%)', // Indian Flag (Saffron-Dark Gray-Green)
-  'linear-gradient(135deg, #E55A9F 0%, #E5A0AD 25%, #C88BC8 50%, #E5CBC8 75%, #9BC4D1 100%)', // Valentine's Day Theme (Pink with Hearts)
+  'linear-gradient(135deg, #C05A8D 0%, #D07098 25%, #B86AA0 50%, #C08595 75%, #9A6A88 100%)', // Valentine's Day Theme (Medium Pink)
+  'linear-gradient(135deg, #5D1049 0%, #880E4F 15%, #8B4513 30%, #7A5C00 45%, #004D00 60%, #003838 75%, #2E236C 90%, #5D1049 100%)', // Holi Festival (Rainbow of Colors - Very Dark)
 ];
 
 // Hardcoded playlist track mappings
 const playlistTracks = {
   Bharat: [
+    '32d36fc7-d69a-4217-b004-baf9412988ec',
+    '1cd9f324-4f86-4814-a04e-ec8f30bf287d',
+    '5855e5dd-b061-45f4-8a73-f53485f41181',
+    '9b8a6e98-ae82-449e-a526-284561ee605e',
+    '318ccac8-c78e-4541-97f4-674fb594d977',
+    '140b03ca-7b00-4521-9ebd-fc45469df14d'
+  ],
+  Valentine: ["f4134ccd-adb5-4d62-b0a8-a9fd8d74e23e","1a707f3c-fb6b-45d3-b5c1-a3ebeb896425","1358929a-bd9a-46a9-bceb-f3f4c997a231","d6f16706-596f-467a-a764-04618b68a3a0","11f5f287-8202-48ca-a7be-4edcee8189cf","4f908ca9-9037-4ac9-9904-45f8897a9009","82b368b9-fb3f-441b-829a-b765922d17f2","22c9c82d-6132-4752-8d51-9f6c7d0ea6d8","e2c748fd-12f3-489a-b47a-021ff544f4c6","d729a181-13e4-46f7-aee1-89f5011ca03c"],
+  Holi: [
     '32d36fc7-d69a-4217-b004-baf9412988ec',
     '1cd9f324-4f86-4814-a04e-ec8f30bf287d',
     '5855e5dd-b061-45f4-8a73-f53485f41181',
@@ -78,6 +90,103 @@ const playlistTracks = {
 
 // Array of dance GIFs (moved outside component to avoid recreation on each render)
 const danceGifs = [dance, dance2, dance3, dance4, dance5, dance6];
+
+// Configurable Promotional Campaigns
+const PROMOTIONAL_CAMPAIGNS = [
+  {
+    id: 'bharat-republic-day',
+    startDate: '2026-01-01', // Format: YYYY-MM-DD
+    endDate: '2026-01-26',
+    backgroundImage: indianFlagImg,
+    playlistName: 'Bharat',
+    themeIndex: 10, // Indian Flag theme
+    title: 'Feel the Spirit of Patriotism!',
+    buttonText: 'Explore the new "Bharat" Playlist',
+    autoCloseDuration: 10000, // milliseconds (10 seconds)
+  },
+  {
+    id: 'valentines-day',
+    startDate: '2026-02-07', // Format: YYYY-MM-DD (year ignored if yearIndependent is true)
+    endDate: '2026-02-14',
+    yearIndependent: true, // Runs every year on these dates
+    backgroundImage: valentineImg,
+    playlistName: 'Valentine',
+    themeIndex: 11, // Valentine's Day theme
+    title: 'Celebrate Love! ❤️',
+    buttonText: '💕 Explore Valentine Playlist',
+    autoCloseDuration: 10000, // milliseconds (10 seconds)
+  },
+  {
+    id: 'holi-festival',
+    startDate: '2026-03-01', // Format: YYYY-MM-DD (year ignored if yearIndependent is true)
+    endDate: '2026-03-03',
+    yearIndependent: true, // Runs every year on these dates
+    backgroundImage: holiImg,
+    playlistName: 'Holi',
+    themeIndex: 12, // Holi Festival theme (Rainbow colors)
+    title: 'Festival of Colors! 🌈',
+    buttonText: '🎨 Celebrate Holi with Music',
+    autoCloseDuration: 10000, // milliseconds (10 seconds)
+  },
+  
+  // Add more campaigns here in the future
+  // Example:
+  // {
+  //   id: 'valentines-day',
+  //   startDate: '2026-02-10',
+  //   endDate: '2026-02-14',
+  //   backgroundImage: valentineBgImg,
+  //   playlistName: 'Romantic Hits',
+  //   themeIndex: 11, // Valentine's theme
+  //   title: 'Celebrate Love!',
+  //   buttonText: 'Explore Romantic Playlist',
+  //   autoCloseDuration: 8000,
+  // },
+];
+
+// Helper function to check if current date is within campaign period
+const getActiveCampaign = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Reset time to midnight for accurate date comparison
+  
+  for (const campaign of PROMOTIONAL_CAMPAIGNS) {
+    if (campaign.yearIndependent) {
+      // For year-independent campaigns, only compare month and day
+      const startDate = new Date(campaign.startDate);
+      const endDate = new Date(campaign.endDate);
+      
+      const todayMonth = today.getMonth();
+      const todayDay = today.getDate();
+      
+      const startMonth = startDate.getMonth();
+      const startDay = startDate.getDate();
+      
+      const endMonth = endDate.getMonth();
+      const endDay = endDate.getDate();
+      
+      // Check if today falls within the date range (month and day only)
+      const todayMonthDay = todayMonth * 100 + todayDay; // e.g., Feb 10 = 110
+      const startMonthDay = startMonth * 100 + startDay;
+      const endMonthDay = endMonth * 100 + endDay;
+      
+      if (todayMonthDay >= startMonthDay && todayMonthDay <= endMonthDay) {
+        return campaign;
+      }
+    } else {
+      // For year-specific campaigns, compare full dates
+      const startDate = new Date(campaign.startDate);
+      const endDate = new Date(campaign.endDate);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999); // Include the entire end date
+      
+      if (today >= startDate && today <= endDate) {
+        return campaign;
+      }
+    }
+  }
+  
+  return null; // No active campaign
+};
 
 const Play = () => {
   // const navigate = useNavigate();
@@ -170,7 +279,13 @@ const Play = () => {
       }
     }
 
-    // Load theme from localStorage
+    // Show welcome modal on every page load/reload if there's an active campaign
+    const activeCampaign = getActiveCampaign();
+    if (activeCampaign) {
+      setShowWelcomeModal(true);
+    }
+
+    // Load theme from localStorage, or use active campaign theme as default
     const savedTheme = localStorage.getItem('beatifyTheme');
     if (savedTheme !== null) {
       try {
@@ -181,17 +296,10 @@ const Play = () => {
       } catch (error) {
         console.error('Error loading theme:', error);
       }
-    }
-
-    // Show welcome modal on every page load/reload, but only until January 26th
-    // On January 27th and after, don't show the modal
-    const today = new Date();
-    const month = today.getMonth(); // 0-11 (January = 0)
-    const day = today.getDate(); // 1-31
-    
-    // Show modal only if it's before January 27th (i.e., January 1-26)
-    if (month === 0 && day <= 26) {
-      setShowWelcomeModal(true);
+    } else if (activeCampaign && activeCampaign.themeIndex !== null && activeCampaign.themeIndex !== undefined) {
+      // If no saved theme, use active campaign theme as default
+      setCurrentTheme(activeCampaign.themeIndex);
+      localStorage.setItem('beatifyTheme', activeCampaign.themeIndex.toString());
     }
   }, []);
 
@@ -199,7 +307,13 @@ const Play = () => {
   useEffect(() => {
     if (!showWelcomeModal) return;
 
-    const duration = 10000; // 10 seconds
+    const activeCampaign = getActiveCampaign();
+    if (!activeCampaign) {
+      setShowWelcomeModal(false);
+      return;
+    }
+
+    const duration = activeCampaign.autoCloseDuration || 10000; // Default 10 seconds
     const interval = 100; // Update every 100ms for smooth progress
     const steps = duration / interval;
     let currentStep = 0;
@@ -218,14 +332,23 @@ const Play = () => {
     return () => clearInterval(progressInterval);
   }, [showWelcomeModal]);
 
-  // Handle navigation to Bharat playlist
-  const handleGoToBharatPlaylist = () => {
+  // Handle navigation to campaign playlist
+  const handleGoToCampaignPlaylist = () => {
+    const activeCampaign = getActiveCampaign();
+    if (!activeCampaign) {
+      setShowWelcomeModal(false);
+      return;
+    }
+
     setShowWelcomeModal(false);
     setShowPlaylists(true);
-    setSelectedPlaylist('Bharat');
-    // Automatically set Indian flag theme when Bharat playlist is selected
-    setCurrentTheme(10);
-    localStorage.setItem('beatifyTheme', '10');
+    setSelectedPlaylist(activeCampaign.playlistName);
+    
+    // Automatically set campaign theme
+    if (activeCampaign.themeIndex !== null && activeCampaign.themeIndex !== undefined) {
+      setCurrentTheme(activeCampaign.themeIndex);
+      localStorage.setItem('beatifyTheme', activeCampaign.themeIndex.toString());
+    }
   };
 
   // Close menu when clicking outside
@@ -1143,10 +1266,16 @@ const Play = () => {
                 currentTrack={currentTrack}
                 onPlaylistClick={playlistName => {
                   setSelectedPlaylist(playlistName);
-                  // Automatically set Indian flag theme when Bharat playlist is selected
+                  // Automatically set themes when specific playlists are selected
                   if (playlistName === 'Bharat') {
                     setCurrentTheme(10);
                     localStorage.setItem('beatifyTheme', '10');
+                  } else if (playlistName === 'Valentine') {
+                    setCurrentTheme(11);
+                    localStorage.setItem('beatifyTheme', '11');
+                  } else if (playlistName === 'Holi') {
+                    setCurrentTheme(12);
+                    localStorage.setItem('beatifyTheme', '12');
                   }
                 }}
                 selectedPlaylist={selectedPlaylist}
@@ -1767,165 +1896,160 @@ const Play = () => {
         </div>
       )}
 
-      {/* Welcome Modal - Bharat Playlist Promotion */}
-      {showWelcomeModal && (
-        <div
-          className='welcome-modal-overlay'
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10001,
-          }}
-        >
+      {/* Welcome Modal - Dynamic Promotional Campaign */}
+      {showWelcomeModal && (() => {
+        const activeCampaign = getActiveCampaign();
+        if (!activeCampaign) return null;
+
+        return (
           <div
-            className='welcome-modal'
-            onClick={e => e.stopPropagation()}
+            className='welcome-modal-overlay'
             style={{
-              backgroundImage: `url(${indianFlagImg})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              borderRadius: '20px',
-              padding: '40px',
-              maxWidth: '500px',
-              width: '90%',
-              border: '1px solid rgba(255, 255, 255, 0.5)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
-              position: 'relative',
-              textAlign: 'center',
-              overflow: 'hidden',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10001,
             }}
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setShowWelcomeModal(false)}
-              aria-label='Close welcome modal'
+            <div
+              className='welcome-modal'
+              onClick={e => e.stopPropagation()}
               style={{
-                position: 'absolute',
-                top: '15px',
-                right: '15px',
-                background: 'rgba(0, 0, 0, 0.5)',
-                border: 'none',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: 'white',
-                fontSize: '18px',
-                transition: 'all 0.3s ease',
-                zIndex: 3,
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-              }}
-              onMouseEnter={e => {
-                e.target.style.background = 'rgba(0, 0, 0, 0.7)';
-                e.target.style.transform = 'scale(1.1) rotate(90deg)';
-              }}
-              onMouseLeave={e => {
-                e.target.style.background = 'rgba(0, 0, 0, 0.5)';
-                e.target.style.transform = 'scale(1) rotate(0deg)';
+                backgroundImage: `url(${activeCampaign.backgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                borderRadius: '20px',
+                padding: '40px',
+                maxWidth: '500px',
+                width: '90%',
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+                position: 'relative',
+                textAlign: 'center',
+                overflow: 'hidden',
               }}
             >
-              <FaTimes />
-            </button>
-
-            {/* Content wrapper */}
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <h2
-                style={{
-                  color: 'white',
-                  margin: '0 0 15px 0',
-                  fontSize: '28px',
-                  fontWeight: 'bold',
-                  textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
-                }}
-              >
-                Feel the Spirit of Patriotism!
-              </h2>
+              {/* Close Button */}
               <button
-                onClick={handleGoToBharatPlaylist}
+                onClick={() => setShowWelcomeModal(false)}
+                aria-label='Close welcome modal'
                 style={{
-                  background: 'black',
+                  position: 'absolute',
+                  top: '15px',
+                  right: '15px',
+                  background: 'rgba(0, 0, 0, 0.5)',
                   border: 'none',
-                  borderRadius: '12px',
-                  padding: '15px 30px',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
                   color: 'white',
                   fontSize: '18px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
                   transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
-                  width: '100%',
+                  zIndex: 3,
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
                 }}
                 onMouseEnter={e => {
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow =
-                    '0 6px 20px rgba(102, 126, 234, 0.6)';
+                  e.target.style.background = 'rgba(0, 0, 0, 0.7)';
+                  e.target.style.transform = 'scale(1.1) rotate(90deg)';
                 }}
                 onMouseLeave={e => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow =
-                    '0 4px 15px rgba(102, 126, 234, 0.4)';
+                  e.target.style.background = 'rgba(0, 0, 0, 0.5)';
+                  e.target.style.transform = 'scale(1) rotate(0deg)';
                 }}
               >
-                Explore the new “Bharat” Playlist
+                <FaTimes />
               </button>
-              {/* <p
-                style={{
-                  color: '#666',
-                  fontSize: '14px',
-                  margin: '15px 0 0 0',
-                  opacity: 0.8,
-                }}
-              >
-                Auto-closing in {Math.ceil((100 - welcomeModalProgress) / 10)}s
-              </p> */}
-            </div>
 
-            {/* Progress Bar */}
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: '8px',
-                backgroundColor: 'rgba(0, 0, 0, 0.1)',
-                borderRadius: '0 0 20px 20px',
-                overflow: 'hidden',
-                zIndex: 2,
-              }}
-            >
+              {/* Content wrapper */}
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <h2
+                  style={{
+                    color: 'white',
+                    margin: '0 0 15px 0',
+                    fontSize: '28px',
+                    fontWeight: 'bold',
+                    textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+                  }}
+                >
+                  {activeCampaign.title}
+                </h2>
+                <button
+                  onClick={handleGoToCampaignPlaylist}
+                  style={{
+                    background: 'black',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '15px 30px',
+                    color: 'white',
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                    width: '100%',
+                  }}
+                  onMouseEnter={e => {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow =
+                      '0 6px 20px rgba(102, 126, 234, 0.6)';
+                  }}
+                  onMouseLeave={e => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow =
+                      '0 4px 15px rgba(102, 126, 234, 0.4)';
+                  }}
+                >
+                  {activeCampaign.buttonText}
+                </button>
+              </div>
+
+              {/* Progress Bar */}
               <div
                 style={{
-                  height: '100%',
-                  width: `${welcomeModalProgress}%`,
-                  background:
-                    'linear-gradient(90deg, #FF9933 0%, #000080 50%, #138808 100%)',
-                  transition: 'width 0.1s linear',
-                  borderRadius:
-                    welcomeModalProgress === 100 ? '0 0 20px 0' : '0',
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: '8px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                  borderRadius: '0 0 20px 20px',
+                  overflow: 'hidden',
+                  zIndex: 2,
                 }}
-              />
+              >
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${welcomeModalProgress}%`,
+                    background:
+                      'linear-gradient(90deg, #FF9933 0%, #000080 50%, #138808 100%)',
+                    transition: 'width 0.1s linear',
+                    borderRadius:
+                      welcomeModalProgress === 100 ? '0 0 20px 0' : '0',
+                  }}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

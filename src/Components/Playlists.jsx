@@ -9,6 +9,8 @@ import edmImg from '../Images/playlistbg/edm.png';
 import globalImg from '../Images/playlistbg/Globalmusic.png';
 import tharImg from '../Images/playlistbg/thar.png';
 import bharatImg from '../Images/playlistbg/bharat.png';
+import valentineImg from '../Images/playlistbg/valentine.png';
+import holiImg from '../Images/playlistbg/holi.png';
 
 const Playlists = ({
   searchQuery = '',
@@ -21,6 +23,8 @@ const Playlists = ({
 }) => {
   const playlists = [
     'Bharat',
+    'Valentine',
+    'Holi',
     'Thar',
     'Old Melodies',
     'Romantic Hits',
@@ -42,6 +46,8 @@ const Playlists = ({
     global: globalImg,
     Thar: tharImg,
     Bharat: bharatImg,
+    Valentine: valentineImg,
+    Holi: holiImg,
   };
 
   // Filter playlists based on favorites first, then search query
